@@ -94,10 +94,10 @@ int main() {
 
     std::stringstream hash_result;
     for (int i = 0; i < 8; ++i) {
-        hash_result << std::hex               // Nurodome, kad versime į šešioliktainę sistemą
-                << std::setfill('0')      // Jei trūksta simbolių, priekyje rašome nulius
-                << std::setw(8)           // Kiekvienas skaičius privalo užimti lygiai 8 simbolius
-                << state[i];              // Įkeliame patį skaičių
+        hash_result << std::hex           // Vertimas i sesioliktaine
+                << std::setfill('0')      // Uzpildome nuliais
+                << std::setw(8)           
+                << state[i];             
     }   
 
     string final_hashas = hash_result.str();
