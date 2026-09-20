@@ -3,7 +3,7 @@ Kadangi mano tikslas buvo sukurti hash funkciją, nenaudojant AI pasiūlymų, sa
 
 # Tyrimai
 ### Seed
-'''
+```
 uint32_t state[8] = {
         0x12345678, // seed 1
         0x8abcd123, // seed 2
@@ -14,7 +14,7 @@ uint32_t state[8] = {
         0x11223344, // seed 7
         0xfedbc111 // seed 8
     };
-'''
+```
 ### Metodologija
 - Pradinė informacija skaitoma iš failo (ios::binary)
 - Tyrimams naudota imtis: Tuščias failas, 2 skirtingi vieno baito dydžio failai; Keli atsitiktinio ASCII turinio failai; Jų kopijos su vienu pakeistu baitu, pradžioje, viduryje, pabaigoje; Keli struktūrizuoti atvejai (pasikartojantys simboliai, tarpai pradžioje / pabaigoje ir pnš.); Vienas UTF-8 tekstas
