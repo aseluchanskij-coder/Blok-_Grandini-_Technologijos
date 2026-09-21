@@ -11,7 +11,15 @@ using std::string;
 
 //busima maisos funkcija
 string custom_hashas(vector<uint8_t> ivestis) {
-    return "Tuscia...";
+    uint64_t state[4] = {
+        0xD6D12E7B5A03A401ULL, 
+        0x8A59B51F41029312ULL, 
+        0x32A398246E20349AULL, 
+        0x7158932402138901ULL  
+    };
+
+
+    return "LaikinasHash...";
 }
 
 int main() {
