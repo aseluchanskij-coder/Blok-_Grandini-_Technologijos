@@ -2,6 +2,8 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <sstream>
+#include <iomanip>
 
 using std::cout;
 using std::vector;
@@ -15,6 +17,9 @@ uint64_t baitaiIUInt64(const vector<uint8_t>& blokas, size_t pradzia) {
         rezultatas |= (static_cast<uint64_t>(blokas[pradzia + i]) << (56 - (i * 8)));
     }
     return rezultatas;
+}
+uint64_t suktiIKaire(uint64_t reiksme, unsigned int poslinkis) {
+    return (reiksme << poslinkis) | (reiksme >> (64 - poslinkis));
 }
 
 string custom_hashas(vector<uint8_t> ivestis) {
@@ -68,10 +73,24 @@ string custom_hashas(vector<uint8_t> ivestis) {
         m[2] = baitaiIUInt64(dabartinisBlokas, 16);
         m[3] = baitaiIUInt64(dabartinisBlokas, 24);
 
+        //maisymas
+        for (int r = 0; r < 16; r++) {
+            state[0] = suktiIKaire(state[0] ^ m[0], 19) + state[1];
+            state[1] = suktiIKaire(state[1] ^ m[1], 29) + state[2];
+            state[2] = suktiIKaire(state[2] ^ m[2], 37) + state[3];
+            state[3] = suktiIKaire(state[3] ^ m[3], 43) + state[0];
+
+            state[0] ^= state[2];
+            state[1] ^= state[3];
+        }
+    } 
         
+    std::stringstream ss;
+    for (int i = 0; i < 4; i++) {
+        ss << std::hex << std::setw(16) << std::setfill('0') << state[i];
     }
 
-    return "LaikinasHash...";
+    return ss.str();
 }
 
 int main() {
