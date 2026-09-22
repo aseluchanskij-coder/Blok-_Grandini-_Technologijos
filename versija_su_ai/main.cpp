@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <sstream>
 #include <iomanip>
+#include <fstream>
 
 using std::cout;
 using std::vector;
@@ -95,17 +96,52 @@ string custom_hashas(vector<uint8_t> ivestis) {
 
 int main() {
     vector<uint8_t> duomenys;
-    string tekstas;
+    int pasirinkimas;
 
-    cout << "Iveskite teksta (viena zodi): ";
-    cin >> tekstas;
+    cout << "Pasirinkite ivesties buda:" << endl;
+    cout << "1 - Ivesti teksta ranka" << endl;
+    cout << "2 - Nuskaityti is failo" << endl;
+    cout << "Iveskite pasirinkima (1 arba 2): ";
+    cin >> pasirinkimas;
+    
+    // Išvalome "Enter" paspaudimą po skaičiaus įvedimo, kad jis netrukdytų toliau
+    cin.ignore(10000, '\n'); 
 
-    for (size_t i = 0; i < tekstas.length(); i++) { //dedame raides i baitu vektoriu
-        duomenys.push_back(tekstas[i]);
+    if (pasirinkimas == 1) {
+        string tekstas;
+        cout << "Iveskite teksta (galima vesti kelis zodzius arba nieko): ";
+        std::getline(cin, tekstas);
+
+        for (size_t i = 0; i < tekstas.length(); i++) {
+            duomenys.push_back(tekstas[i]);
+        }
+    } 
+    else if (pasirinkimas == 2) {
+        string failoPavadinimas;
+        cout << "Iveskite failo pavadinima (pvz., test.txt): ";
+        std::getline(cin, failoPavadinimas);
+
+        // Atidarome failą binariniu režimu (kad nuskaitytų lygiai taip, kaip guli atmintyje)
+        std::ifstream failas(failoPavadinimas, std::ios::binary);
+
+        if (!failas) {
+            cout << "KLAIDA: Nepavyko atidaryti failo '" << failoPavadinimas << "'!" << endl;
+            return 1; // Baigiame programą su klaida
+        }
+
+        // Skaitome failą po vieną baitą iki pat pabaigos
+        char baitas;
+        while (failas.get(baitas)) {
+            duomenys.push_back(static_cast<uint8_t>(baitas));
+        }
+        failas.close();
+    } 
+    else {
+        cout << "Neteisingas pasirinkimas!" << endl;
+        return 1;
     }
 
-    cout << "Nuskaityta baitu: " << duomenys.size() << endl; //kad ateityje suzinot kiek baitu reik pripildyti pading,
-    // kad pripildyt iki 32 baitu, tai darysiu pasitelkiant pirminiais skaiciais 
+    cout << "Nuskaityta baitu: " << duomenys.size() << endl;
     
     string rezultatas = custom_hashas(duomenys);
     cout << "Gauta maisa (Hash): " << rezultatas << endl;
