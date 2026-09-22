@@ -21,16 +21,6 @@ void readFile(const string& filename, vector<unsigned char>& data) {
     }
 }
 
-void readInput(vector<unsigned char>& data) {
-    string input;
-    std::cout << "Įveskite tekstą: ";
-    std::getline(std::cin, input);
-    if(input.empty()) {
-        throw std::runtime_error("Įvestas tekstas negali būti tuščias");
-    }
-    data.assign(input.begin(), input.end());
-}
-
 void bigEndian(size_t dydis_bitais, vector<unsigned char>& data){
     for (int i = 7; i >= 0; --i) {
         // 1. Paslenkame bitus į dešinę, kad norimas baitas atsidurtų pačiame gale (i * 8)
@@ -69,7 +59,7 @@ void lavina(uint32_t* state) {
     
 }
 
-int main() {
+string hash(const string& filename) {
     vector<unsigned char> text;
     uint32_t state[8] = {
         0x12345678, // seed 1
@@ -81,25 +71,6 @@ int main() {
         0x11223344, // seed 7
         0xfedbc111 // seed 8
     };
-    string pasirinkimas;
-    std::cout << "Pasirinkite 1 - skaityti iš failo, 2 - įvesti tekstą ranka: ";
-    std::getline(std::cin, pasirinkimas);
-    if (pasirinkimas == "1") {
-        string failoPav;
-        std::cout << "Įveskite failo pavadinimą: ";
-        std::getline(std::cin, failoPav);
-        try {
-            readFile(failoPav, text);
-        } catch (const std::exception& e) {
-            std::cerr << e.what() << std::endl;
-            return 1;
-        }
-    } else if (pasirinkimas == "2") {
-        readInput(text);
-    } else {
-        std::cerr << "Neteisingas pasirinkimas" << std::endl;
-        return 1;
-    }
     // for (unsigned char c : text) {
     //     std::cout << c;
     // }
@@ -123,7 +94,10 @@ int main() {
                 << state[i];             
     }   
 
-    string final_hashas = hash_result.str();
-    std::cout << "Galutinis hash'as: " << final_hashas << std::endl;
+    return hash_result.str();
+}
+int main() {
+    string final_hashas = hash("input.txt");
+    std::cout << "Hash: " << final_hashas << std::endl;
     return 0;
 }
