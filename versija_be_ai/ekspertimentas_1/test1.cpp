@@ -61,6 +61,7 @@ void lavina(uint32_t* state) {
 
 string hash(const string& filename) {
     vector<unsigned char> text;
+    readFile(filename, text);
     uint32_t state[8] = {
         0x12345678, // seed 1
         0x8abcd123, // seed 2
@@ -97,7 +98,16 @@ string hash(const string& filename) {
     return hash_result.str();
 }
 int main() {
-    string final_hashas = hash("input.txt");
-    std::cout << "Hash: " << final_hashas << std::endl;
+    std::cout << "Hashas su vieno baito ivestimi 'a': " << hash("failas1.txt") << std::endl;
+    std::cout << "Hashas su vieno baito ivestimi 'b': " << hash("failas2.txt") << std::endl;
+    std::cout << "Hashas su >1000 baitu ascii teksto ivestimi: " << hash("failas3.txt") << std::endl;
+    std::cout << "Hashas su >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas: " << hash("failas3_cp.txt") << std::endl;
+    std::cout << "Hashas su kita >1000 baitu ascii teksto ivestimi: " << hash("failas4.txt") << std::endl;
+    std::cout << "Hashas su kita >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas: " << hash("failas4_cp.txt") << std::endl;
+    std::cout << "Hashas su dar kita >1000 baitu ascii teksto ivestimi: " << hash("failas5.txt") << std::endl;
+    std::cout << "Hashas su dar kita >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas: " << hash("failas5_cp.txt") << std::endl;
+    std::cout << "Hashas su strukturuota pasikartojancios raides ivestimi (AAA...AAA): " << hash("strukt_failas1.txt") << std::endl;
+    std::cout << "Hashas su strukturuota ivestimi su '/n' simboliu (ABC / abc): " << hash("strukt_failas2.txt") << std::endl;
+    std::cout << "Hashas su ne ascii simboliu ivestimi: " << hash("ne_ascii.txt") << std::endl;
     return 0;
 }

@@ -24,6 +24,18 @@ uint32_t state[8] = {
 - Kompiliatoriaus versija: g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
 - Kompiliavimo parinktys: g++ -O3 main.cpp -o main
 
+### Eksperimentas 1
+- Hashas su vieno baito ivestimi 'a': 2227592bcce15b21ca3a25ffd1dbb6ddfd104c4463700d1927a27ee18c617fc2
+- Hashas su vieno baito ivestimi 'b': 6c27592be2e15b21a83a25ffa3dbb6dddb104c4439700d1998a27ee16b617fc2
+- Hashas su >1000 baitu ascii teksto ivestimi: 43727c100990f2df2d420aff3ffe73a624fc1b7ed73df0aa64165c89ced1e284
+- Hashas su >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas: 3e7e2716692d78df94b928ff2d90b4a60c95d97853a488a430575487d8c5558a
+- Hashas su kita >1000 baitu ascii teksto ivestimi: 081d449e5d10d180dc87624f2d9b9b752e4bcec241fcafb600f84541edc2fd03
+- Hashas su kita >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas: d3ecad9e25d6718090b30dc55cfa5b75b953bdc22c30d98e3cbf7c797f2c0d3b
+- Hashas su dar kita >1000 baitu ascii teksto ivestimi: 09614641a1468231760b18586856d2bdf6880b6ee9d5df78600cb2418868bd46
+- Hashas su dar kita >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas: 8ed2824103688db11d0f295bcdb1a3be005ec26d2da8a07bafcfa0426c859e45
+- Hashas su strukturuota pasikartojancios raides ivestimi (AAA...AAA): c742492b1db3c32101f11dff5af416dd235e8444859e3d116b2736e92e33b7ca
+- Hashas su strukturuota ivestimi su '/n' simboliu (ABC / abc) a2a9452b557c862121c341ffa9b915dd7332ac443fb1ca29c4983fdb046ec178
+- Hashas su ne ascii simboliu ivestimi: d25a383144332efb3492d85ecae4e149dee65b1da825576b84c9b54db1df7e72 
 
 # Šaltiniai
 - https://dev.to/alen_pythonista_bb/binary-file-handling-in-c-a-beginners-guide-148o
