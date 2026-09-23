@@ -35,7 +35,16 @@ uint32_t state[8] = {
 - Hashas su dar kita >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas: 8ed2824103688db11d0f295bcdb1a3be005ec26d2da8a07bafcfa0426c859e45
 - Hashas su strukturuota pasikartojancios raides ivestimi (AAA...AAA): c742492b1db3c32101f11dff5af416dd235e8444859e3d116b2736e92e33b7ca
 - Hashas su strukturuota ivestimi su '/n' simboliu (ABC / abc) a2a9452b557c862121c341ffa9b915dd7332ac443fb1ca29c4983fdb046ec178
-- Hashas su ne ascii simboliu ivestimi: d25a383144332efb3492d85ecae4e149dee65b1da825576b84c9b54db1df7e72 
+- Hashas su ne ascii simboliu ivestimi: d25a383144332efb3492d85ecae4e149dee65b1da825576b84c9b54db1df7e72
+
+### Eksperimentas 2
+Hashas su vieno baito ivestimi 'a' is failo: 2227592bcce15b21ca3a25ffd1dbb6ddfd104c4463700d1927a27ee18c617fc2
+Hashas su vieno baito ivestimi 'a' per terminala: 
+
+Įveskite tekstą: a
+2227592bcce15b21ca3a25ffd1dbb6ddfd104c4463700d1927a27ee18c617fc2
+
+- Mano maiša yra 256 bitų ilgio, 256 / 4 yra 64. Gautas hash yra būtent 64 simbolių ilgio, hex formatu.
 
 # Šaltiniai
 - https://dev.to/alen_pythonista_bb/binary-file-handling-in-c-a-beginners-guide-148o

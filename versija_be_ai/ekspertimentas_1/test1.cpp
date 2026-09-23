@@ -21,6 +21,16 @@ void readFile(const string& filename, vector<unsigned char>& data) {
     }
 }
 
+void readInput(vector<unsigned char>& data) {
+    string input;
+    std::cout << "Įveskite tekstą: ";
+    std::getline(std::cin, input);
+    if(input.empty()) {
+        throw std::runtime_error("Įvestas tekstas negali būti tuščias");
+    }
+    data.assign(input.begin(), input.end());
+}
+
 void bigEndian(size_t dydis_bitais, vector<unsigned char>& data){
     for (int i = 7; i >= 0; --i) {
         // 1. Paslenkame bitus į dešinę, kad norimas baitas atsidurtų pačiame gale (i * 8)
@@ -59,9 +69,11 @@ void lavina(uint32_t* state) {
     
 }
 
-string hash(const string& filename) {
+string hash(const string& filename, bool arFailas = true) {
     vector<unsigned char> text;
-    readFile(filename, text);
+    if(arFailas)
+        readFile(filename, text);
+    else readInput(text);
     uint32_t state[8] = {
         0x12345678, // seed 1
         0x8abcd123, // seed 2
@@ -98,6 +110,7 @@ string hash(const string& filename) {
     return hash_result.str();
 }
 int main() {
+    std::cout << "Pirmas eksperimentas:" << std::endl;
     std::cout << "Hashas su vieno baito ivestimi 'a': " << hash("failas1.txt") << std::endl;
     std::cout << "Hashas su vieno baito ivestimi 'b': " << hash("failas2.txt") << std::endl;
     std::cout << "Hashas su >1000 baitu ascii teksto ivestimi: " << hash("failas3.txt") << std::endl;
@@ -109,5 +122,17 @@ int main() {
     std::cout << "Hashas su strukturuota pasikartojancios raides ivestimi (AAA...AAA): " << hash("strukt_failas1.txt") << std::endl;
     std::cout << "Hashas su strukturuota ivestimi su '/n' simboliu (ABC / abc): " << hash("strukt_failas2.txt") << std::endl;
     std::cout << "Hashas su ne ascii simboliu ivestimi: " << hash("ne_ascii.txt") << std::endl;
+    std::cout << "--------------------------------------------------------------------------" << std::endl;
+
+    std::cout << "Antras eksperimentas:" << std::endl;
+    std::cout << "Hashas su vieno baito ivestimi 'a' is failo: " << hash("failas1.txt") << std::endl;
+    std::cout << "Hashas su vieno baito ivestimi 'a' per terminala: \n" << std::endl << hash("failas1.txt", 0) << std::endl;
+    std::cout << "---------------------------------------------------------------------------" << std::endl;
+
+    std::cout << "Trečias eksperimentas:" << std::endl;
+    std::cout << "A, B, A Testas" << std::endl;
+    std::cout << "1 (A): " << hash("failas1.txt") << std::endl;
+    std::cout << "2 (B): " << hash("failas2.txt") << std::endl;
+    std::cout << "3 (A): " << hash("failas1.txt") << std::endl;
     return 0;
 }
