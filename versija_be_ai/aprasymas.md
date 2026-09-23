@@ -46,6 +46,42 @@ Hashas su vieno baito ivestimi 'a' per terminala:
 
 - Mano maiša yra 256 bitų ilgio, 256 / 4 yra 64. Gautas hash yra būtent 64 simbolių ilgio, hex formatu.
 
+### Eksperimentas 3
+A, B, A Testas
+1 (A): 2227592bcce15b21ca3a25ffd1dbb6ddfd104c4463700d1927a27ee18c617fc2
+2 (B): 6c27592be2e15b21a83a25ffa3dbb6dddb104c4439700d1998a27ee16b617fc2
+3 (A): 2227592bcce15b21ca3a25ffd1dbb6ddfd104c4463700d1927a27ee18c617fc2
+
+Paleidžiant programą iš naujo:
+Pirma kartą iš failas1.txt: 2227592bcce15b21ca3a25ffd1dbb6ddfd104c4463700d1927a27ee18c617fc2
+Antra kartą iš failas1.txt: 2227592bcce15b21ca3a25ffd1dbb6ddfd104c4463700d1927a27ee18c617fc2
+- Atlikus A-B-A sekos testą vienos sesijos metu bei testuojant programą atskirais paleidimais, rezultatų neatitikimų nebuvo rasta. Hash reikšmės tam pačiam failui visada sutapo. Taip yra todėl, nes funkcija hash() kiekvieno iškvietimo metu iš naujo inicializuoja pradinę būseną (state masyvą) bei sukuria naują, tuščią text vektorių, todėl atmintyje nelieka jokių praėjusių skaičiavimų pėdsakų.
+
+### Eksperimentas 4
+Failas nuskaitytas. Viso eilučių: 789
+
+Eilutės Baitai  Min(ms) Max(ms) Vidurkis(ms)
+1       70      0.000597144     0.000861559     0.00071298
+2       123     0.000755823     0.000810019     0.000776666
+4       205     0.000615249     0.000890526     0.000707684
+8       362     0.000885155     0.00092812      0.000898904
+16      996     0.00205203      0.00211661      0.00207924
+32      1841    0.00358121      0.00362758      0.00359847
+64      3712    0.00701232      0.00707894      0.0070491
+128     9155    0.0169211       0.0169606       0.0169403
+256     20409   0.0378242       0.0381168       0.0379359
+512     47434   0.0860224       0.0886161       0.0869255
+
+- Tiesinė priklausomybė (Algoritmo sudėtingumas $O(n)$):
+    Duomenų apdorojimo laikas auga tiesiogiai proporcingai įvesties dydžiui. Tai ypač gerai matoma nuo 16 eilučių (~1 KB) ribos. Pavyzdžiui, failo dydžiui padidėjus maždaug dvigubai (nuo 1841 B iki 3712 B), vidutinis vykdymo laikas taip pat padidėja beveik lygiai dvigubai (nuo 0.0036 ms iki 0.0070 ms). Tai įrodo, kad algoritmas teisingai apdoroja duomenis nuosekliais blokais (Merkle-Damgård struktūra) – kuo daugiau blokų, tuo ilgiau užtrunka ciklas, bet apdorojimo laikas vienam blokui išlieka pastovus.
+- Anomalija prie mažų įvesčių (Bazinės išlaidos):
+    Matuojant labai mažas ištraukas (1, 2 ir 4 eilutes, atitinkamai 70 B, 123 B ir 205 B), vykdymo laikas beveik nesiskiria ir svyruoja apie 0.0007 ms. Matoma netgi nedidelė anomalija, kai 205 baitų apdorojimas (0.000707 ms) užtruko vos vos trumpiau nei 123 baitų (0.000776 ms).
+    Paaiškinimas: Kai duomenų kiekis labai mažas, paties maišymo (matematikos) laikas yra toks trumpas, kad jį užgožia bazinės programos išlaidos (overhead) – atminties išskyrimas vektoriui (std::vector inicializacija), funkcijų iškvietimai ir pradinės būsenos užkrovimas. Be to, dėl padding funkcijos pridedamų nulių, labai trumpi tekstai vis tiek yra išplečiami iki to paties ar panašaus blokų skaičiaus (pvz., tiek 70, tiek 123 baitai galiausiai sudaro nedidelį skaičių pilnų 256 bitų blokų), todėl ir laikas išlieka identiškas.
+- Algoritmo stabilumas:
+    Skirtumas tarp minimalaus (Min) ir maksimalaus (Max) vykdymo laiko kiekvienoje eilutėje yra labai mažas (dažniausiai skiriasi tik dešimtatūkstantosiomis milisekundės dalimis). Tai rodo, kad:
+        - Matavimai atlikti teisingai (pakankamas iteracijų kiekis neutralizavo operacinės sistemos foninių procesų triukšmą).
+        - Algoritmo veikimas yra stabilus ir neturi jokių neplanuotų bottlenecks, atsirandančių dėl atminties fragmentacijos.
+
 # Šaltiniai
 - https://dev.to/alen_pythonista_bb/binary-file-handling-in-c-a-beginners-guide-148o
 - https://www.youtube.com/watch?v=gTfNtop9vzM
