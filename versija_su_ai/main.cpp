@@ -95,56 +95,62 @@ string custom_hashas(vector<uint8_t> ivestis) {
 }
 
 int main() {
-    vector<uint8_t> duomenys;
-    int pasirinkimas;
+    while (true) {
+        vector<uint8_t> duomenys;
+        int pasirinkimas;
 
-    cout << "Pasirinkite ivesties buda:" << endl;
-    cout << "1 - Ivesti teksta ranka" << endl;
-    cout << "2 - Nuskaityti is failo" << endl;
-    cout << "Iveskite pasirinkima (1 arba 2): ";
-    cin >> pasirinkimas;
-    
-    // Išvalome "Enter" paspaudimą po skaičiaus įvedimo, kad jis netrukdytų toliau
-    cin.ignore(10000, '\n'); 
-
-    if (pasirinkimas == 1) {
-        string tekstas;
-        cout << "Iveskite teksta (galima vesti kelis zodzius arba nieko): ";
-        std::getline(cin, tekstas);
-
-        for (size_t i = 0; i < tekstas.length(); i++) {
-            duomenys.push_back(tekstas[i]);
-        }
-    } 
-    else if (pasirinkimas == 2) {
-        string failoPavadinimas;
-        cout << "Iveskite failo pavadinima (pvz., test.txt): ";
-        std::getline(cin, failoPavadinimas);
-
-        // Atidarome failą binariniu režimu (kad nuskaitytų lygiai taip, kaip guli atmintyje)
-        std::ifstream failas(failoPavadinimas, std::ios::binary);
-
-        if (!failas) {
-            cout << "KLAIDA: Nepavyko atidaryti failo '" << failoPavadinimas << "'!" << endl;
-            return 1; // Baigiame programą su klaida
+        cout << "\n--- MENIU ---" << endl;
+        cout << "1 - Ivesti teksta ranka" << endl;
+        cout << "2 - Nuskaityti is failo" << endl;
+        cout << "0 - Iseiti is programos" << endl;
+        cout << "Iveskite pasirinkima: ";
+        cin >> pasirinkimas;
+        
+        if (pasirinkimas == 0) {
+            cout << "Programa baigia darba." << endl;
+            break; // Nutraukia ciklą ir baigia programą
         }
 
-        // Skaitome failą po vieną baitą iki pat pabaigos
-        char baitas;
-        while (failas.get(baitas)) {
-            duomenys.push_back(static_cast<uint8_t>(baitas));
+        // Išvalome "Enter" paspaudimą po skaičiaus įvedimo
+        cin.ignore(10000, '\n'); 
+
+        if (pasirinkimas == 1) {
+            string tekstas;
+            cout << "Iveskite teksta (galima vesti kelis zodzius arba nieko): ";
+            std::getline(cin, tekstas);
+
+            for (size_t i = 0; i < tekstas.length(); i++) {
+                duomenys.push_back(tekstas[i]);
+            }
+        } 
+        else if (pasirinkimas == 2) {
+            string failoPavadinimas;
+            cout << "Iveskite failo pavadinima (pvz., test.txt): ";
+            std::getline(cin, failoPavadinimas);
+
+            std::ifstream failas(failoPavadinimas, std::ios::binary);
+
+            if (!failas) {
+                cout << "KLAIDA: Nepavyko atidaryti failo '" << failoPavadinimas << "'!" << endl;
+                continue; // Grįžta į ciklo pradžią, nenužudo programos
+            }
+
+            char baitas;
+            while (failas.get(baitas)) {
+                duomenys.push_back(static_cast<uint8_t>(baitas));
+            }
+            failas.close();
+        } 
+        else {
+            cout << "Neteisingas pasirinkimas! Bandykite dar karta." << endl;
+            continue; 
         }
-        failas.close();
-    } 
-    else {
-        cout << "Neteisingas pasirinkimas!" << endl;
-        return 1;
+
+        cout << "Nuskaityta baitu: " << duomenys.size() << endl;
+        
+        string rezultatas = custom_hashas(duomenys);
+        cout << "Gauta maisa (Hash): " << rezultatas << endl;
     }
-
-    cout << "Nuskaityta baitu: " << duomenys.size() << endl;
-    
-    string rezultatas = custom_hashas(duomenys);
-    cout << "Gauta maisa (Hash): " << rezultatas << endl;
 
     return 0;
 }

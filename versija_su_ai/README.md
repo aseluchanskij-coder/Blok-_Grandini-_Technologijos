@@ -2,6 +2,8 @@ Pradines busena sukuriu skirstant 256 bitu i keturis gabalus po 64, pradinė bub
 
 Toliau medaus daryti pirmini pildyma (padding). Jis reikalingas tam kad nesvarbu ka mes ivesin viena raide, nieko, ar daug raidziu, musu blokas dalintusi is 32 (nes musu mano versijos blokai bus po 32 baitus). Visa likusia vieta kuria atskirsime pabaiga bus pripildyta pirminiais skaiciais 2,3,5,7,11 vietoj standartinio nuliu. Pripildome masyve is hard coded saraso (kadangi neapsimoka tikrinti ar skaičius pirminis kai ju pripildymas niekaip nevirsiu 32 baitu).
 
+1 eksperimentas
+
 Pirmojoje lentelėje buvo patikrinti hash su skirtingu failu ivestimi:
 | Failo tipas                                                                        | Gautas hash                                                      |
 |------------------------------------------------------------------------------------|------------------------------------------------------------------|
@@ -18,3 +20,97 @@ Pirmojoje lentelėje buvo patikrinti hash su skirtingu failu ivestimi:
 | Hashas su ne ascii simboliu ivestimi:                                              | 32e7f014bda6619ab29ea388f6a7198de3882818f56f7a656f412f189599afe7 |
 
 Išvados: vienodu hash nėra, iš to galime spręsti, jog skaitymas vyksta taisyklingai.
+
+2 eksperimentas
+
+Visų pirma patikrinau, ar ranka ir skaitymas iš teksto duoda tą patį hash išvestį, kai įvedame/skaitome tą patį simbolį, šiuo atveju "a":
+
+1) Įvedimas ranka:
+Pasirinkite ivesties buda:
+1 - Ivesti teksta ranka
+2 - Nuskaityti is failo
+Iveskite pasirinkima (1 arba 2): 1
+Iveskite teksta (galima vesti kelis zodzius arba nieko): a
+Nuskaityta baitu: 1
+Gauta maisa (Hash): d417829f4b73db6cfce0f37fa44cad1163fa1376935903c0ff668df9701541c7
+
+2) Skaitymas iš failo:
+
+Pasirinkite ivesties buda:
+1 - Ivesti teksta ranka
+2 - Nuskaityti is failo
+Iveskite pasirinkima (1 arba 2): 2
+Iveskite failo pavadinima (pvz., test.txt): failas1.txt
+Nuskaityta baitu: 1
+Gauta maisa (Hash): d417829f4b73db6cfce0f37fa44cad1163fa1376935903c0ff668df9701541c7
+
+Patikrinę 1-ojo eksperimento išvestis (1 lentelė), taip pat 2-ojo eksperimento antrąją dalį ir paskaičiavus simbolių skaičių visais atvejais gavosi 64 simboliai. Mano kode tai užtikrina ši eilutė:
+
+ss << std::hex << std::setw(16) << std::setfill('0') << state[i];
+
+Std::setfill('0') užtikrina, kad jei mano sugeneruotas blokas prasideda nuliais, jie niekur nepradingsta.
+
+3 eksperimentas
+
+Visų pirma paleidau to paties failo nuskaitymą du kartus, failo pavadinimas "failas5.txt". Ir patikrinau išvestį.
+
+1) 
+--- MENIU ---
+1 - Ivesti teksta ranka
+2 - Nuskaityti is failo
+0 - Iseiti is programos
+Iveskite pasirinkima: 2
+Iveskite failo pavadinima (pvz., test.txt): failas5.txt
+Nuskaityta baitu: 1535
+Gauta maisa (Hash): 73812a02e20f44b0096a4b62fb9a216fde4a45a085263e5a5118d3136d0c3f42
+
+2) 
+--- MENIU ---
+1 - Ivesti teksta ranka
+2 - Nuskaityti is failo
+0 - Iseiti is programos
+Iveskite pasirinkima: 2
+Iveskite failo pavadinima (pvz., test.txt): failas5.txt
+Nuskaityta baitu: 1535
+Gauta maisa (Hash): 73812a02e20f44b0096a4b62fb9a216fde4a45a085263e5a5118d3136d0c3f42
+
+Abejais atvejais gavau tą patį rezultatą. Toliau tikrinsiu A, B, A principą, kad tai įgyvendint reikėjo papildyti kodą, t. y. pridėti 3-ią meniu punktą, kad vartotojas pats nuspręstų kada programa baigia darbą, kadangi jei kiekvieną kartą leisti programą per naujo, po programos veikimo operacinė sistema pati išvalis šiukšles taip padarydama, jog neįmanoma būtų patikrinti eksperimento patikimumo. Eksperimento rezultatai: 
+
+--- MENIU ---
+1 - Ivesti teksta ranka
+2 - Nuskaityti is failo
+0 - Iseiti is programos
+Iveskite pasirinkima: 1
+Iveskite teksta (galima vesti kelis zodzius arba nieko): A
+Nuskaityta baitu: 1
+Gauta maisa (Hash): 9bb58288b8cfe7abd0bab28b374317ffd365a2fffc864f693ff3b15b5783dfa2
+
+--- MENIU ---
+1 - Ivesti teksta ranka
+2 - Nuskaityti is failo
+0 - Iseiti is programos
+Iveskite pasirinkima: 1
+Iveskite teksta (galima vesti kelis zodzius arba nieko): B
+Nuskaityta baitu: 1
+Gauta maisa (Hash): 3e3cce9228bd7a1028d4c28db9ba008094cdd2af03565571b702f89d4b387a72
+
+--- MENIU ---
+1 - Ivesti teksta ranka
+2 - Nuskaityti is failo
+0 - Iseiti is programos
+Iveskite pasirinkima: 1
+Iveskite teksta (galima vesti kelis zodzius arba nieko): A
+Nuskaityta baitu: 1
+Gauta maisa (Hash): 9bb58288b8cfe7abd0bab28b374317ffd365a2fffc864f693ff3b15b5783dfa2
+
+--- MENIU ---
+1 - Ivesti teksta ranka
+2 - Nuskaityti is failo
+0 - Iseiti is programos
+Iveskite pasirinkima: 0
+Programa baigia darba.
+
+Iš eksperimento rezultatų matosi, kad A,B,A principas veikia teisingai, ir pirma įvestis nuo trečios nesiskiria.
+
+4 eksperimentas
+
