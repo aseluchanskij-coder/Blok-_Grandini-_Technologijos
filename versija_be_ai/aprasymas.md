@@ -82,6 +82,253 @@ Eilutės Baitai  Min(ms) Max(ms) Vidurkis(ms)
         - Matavimai atlikti teisingai (pakankamas iteracijų kiekis neutralizavo operacinės sistemos foninių procesų triukšmą).
         - Algoritmo veikimas yra stabilus ir neturi jokių neplanuotų bottlenecks, atsirandančių dėl atminties fragmentacijos.
 
+### Eksperimentas 5
+Eksperimento metu sugeneravome po 100 000 atsitiktinių ASCII eilučių porų keturiems ilgiams: 10, 100, 500 ir 1000 baitų (naudotas std::mt19937 generatorius su seed = 2026). Kolizijų ieškojome trimis etapais.
+
+--- 5 EKSPERIMENTAS: KOLIZIJU PAIESKA ---
+Naudojamas seed: 2026. Abecele: ASCII (32-126).
+
+Generuojama 100,000 poru ilgiui: 10 baitu...
+Porose rastu koliziju: 0
+Visame rinkinyje rastu koliziju (skirtingoms ivestims): 0
+Skirtingu ivesciu grupiu skaicius: 200000
+
+Generuojama 100,000 poru ilgiui: 100 baitu...
+Porose rastu koliziju: 0
+Visame rinkinyje rastu koliziju (skirtingoms ivestims): 0
+Skirtingu ivesciu grupiu skaicius: 200000
+
+Generuojama 100,000 poru ilgiui: 500 baitu...
+Porose rastu koliziju: 0
+Visame rinkinyje rastu koliziju (skirtingoms ivestims): 0
+Skirtingu ivesciu grupiu skaicius: 200000
+
+Generuojama 100,000 poru ilgiui: 1000 baitu...
+Porose rastu koliziju: 0
+Visame rinkinyje rastu koliziju (skirtingoms ivestims): 0
+Skirtingu ivesciu grupiu skaicius: 200000
+
+--- STRUKTURUOTI ATVEJAI ---
+Tekstas: ABABABABABABABAB | Hash: d9286c6990395263757ea4ff8d5044ddc28533448cf5b1916a14862b82d5c34a
+Tekstas: BচুBচুBচুBচুBচু | Hash: 11a76b589635bf7b123147c5a286298b0c9975e9152fc09052d88c5b1758c31a
+Tekstas: AAAAAAAAAAAAAAAB | Hash: 8da8f0ea2d4d87638b9c54ffa90741ddb5e48b443fe9e2918f21d0a8e4608dca
+Tekstas: BAAAAAAAAAAAAAAA | Hash: 602205ea09fd3c607fb4e3ff23181dddc4719b448918bb91b24714a812b7b7ca
+Tekstas: 0000000000000000 | Hash: 616f3a1b2cb89711d1f734ff747964dd52f28944e1fb259126f21e595fe8ca4a
+Tekstas: 1111111111111111 | Hash: b2a23d9a9dc37c10fea043fffab0cddde00f7b443f4a8b915457dcd8588a3fca
+Strukturiniu koliziju rasta: 0
+Rezultatai rodo, kad kolizijų nebuvo aptikta. Kaip minėta paskaitose, kolizijos tikimybė yra itin maža. Remiantis užduoties sąlygoje pateiktomis formulėmis, vienos konkrečios poros kolizijos tikimybė yra vos $2^{-256}$.Eksperimento metu vienam lygiui buvo sugeneruota 200 000 skirtingų įvesčių. Iš šio kiekio galima sudaryti maždaug $2 \times 10^{10}$ (20 milijardų) unikalių porų. Nors 20 milijardų atrodo didelis skaičius, bendras galimų maišos (hash) reikšmių kiekis yra $2^{256}$. Lyginant su šia neįsivaizduojamai didele aibe, mūsų sugeneruotas porų skaičius yra pernelyg mažas, todėl tikimybė eksperimento metu rasti koliziją išlieka praktiškai nulinė.
+
+### Eksperimentas 6
+Lavinos efektui patikrinti parašiau kodą, kuris sugeneruoja 100000 porų, kuris po lygiai paskirsto keturiems prieš tai nurodytiems ilgiams. Gavau štai tokius rezultatus: 
+--- 6 EKSPERIMENTAS: LAVINOS EFEKTAS ---
+Viso poru: 100 000 (po 25 000 ilgiams 10, 100, 500, 1000).
+
+Ilgis: 10 baitu
+  Bitu skirtumas (%): Min = 0.78%, Max = 50.00%, Vidurkis = 24.25%
+  Hex skirtumas (%):  Min = 3.12%, Max = 81.25%, Vidurkis = 47.48%
+
+Ilgis: 100 baitu
+  Bitu skirtumas (%): Min = 1.17%, Max = 61.33%, Vidurkis = 27.90%
+  Hex skirtumas (%):  Min = 4.69%, Max = 100.00%, Vidurkis = 53.93%
+
+Ilgis: 500 baitu
+  Bitu skirtumas (%): Min = 1.56%, Max = 64.06%, Vidurkis = 28.34%
+  Hex skirtumas (%):  Min = 6.25%, Max = 100.00%, Vidurkis = 54.67%
+
+Ilgis: 1000 baitu
+  Bitu skirtumas (%): Min = 1.17%, Max = 59.38%, Vidurkis = 27.86%
+  Hex skirtumas (%):  Min = 3.12%, Max = 100.00%, Vidurkis = 53.86%
+
+--- BENDRI REZULTATAI (100 000 poru) ---
+Bitu skirtumas (%): Min = 0.78%, Max = 64.06%, Vidurkis = 27.09%
+Hex skirtumas (%):  Min = 3.12%, Max = 100.00%, Vidurkis = 52.48%
+
+--- HISTOGRAMOS DUOMENYS (Bitu skirtumas) ---
+Besiskiriantys_bitai,Poru_skaicius
+2,1
+3,8
+4,16
+5,34
+6,32
+7,61
+8,68
+9,99
+10,102
+11,90
+12,164
+13,200
+14,211
+15,251
+16,310
+17,384
+18,454
+19,528
+20,629
+21,763
+22,914
+23,1119
+24,1234
+25,1467
+26,1583
+27,1710
+28,1779
+29,1792
+30,1788
+31,1654
+32,1563
+33,1343
+34,1113
+35,903
+36,713
+37,552
+38,380
+39,285
+40,225
+41,194
+42,171
+43,187
+44,184
+45,254
+46,280
+47,319
+48,419
+49,452
+50,563
+51,603
+52,821
+53,812
+54,976
+55,1112
+56,1234
+57,1283
+58,1316
+59,1462
+60,1489
+61,1443
+62,1455
+63,1390
+64,1277
+65,1184
+66,1029
+67,951
+68,803
+69,677
+70,568
+71,528
+72,440
+73,343
+74,367
+75,363
+76,339
+77,375
+78,385
+79,487
+80,504
+81,608
+82,653
+83,805
+84,845
+85,911
+86,1075
+87,1142
+88,1293
+89,1368
+90,1438
+91,1490
+92,1597
+93,1674
+94,1666
+95,1674
+96,1652
+97,1636
+98,1542
+99,1601
+100,1491
+101,1406
+102,1306
+103,1247
+104,1162
+105,1087
+106,961
+107,891
+108,860
+109,780
+110,787
+111,722
+112,656
+113,626
+114,530
+115,483
+116,475
+117,448
+118,369
+119,356
+120,324
+121,302
+122,287
+123,291
+124,229
+125,210
+126,189
+127,167
+128,150
+129,129
+130,103
+131,101
+132,87
+133,74
+134,80
+135,62
+136,60
+137,40
+138,36
+139,35
+140,22
+141,25
+142,21
+143,18
+144,22
+145,8
+146,11
+147,8
+148,5
+149,8
+150,2
+151,5
+152,5
+153,4
+154,1
+155,2
+156,1
+157,1
+164,1
+
+Išanalizavus rezultatus matyti, kad algoritmas neužtikrina pakankamo bitų sklaidos (lavinos) efekto. Remiantis standartinėmis maišos (hash) funkcijomis, pakeitus įvestį, vidutiniškai turėtų pasikeisti apie 50 % maišos bitų, tačiau mano realizacijoje šis pokytis siekia tik apie 27 %. Dėl šios priežasties atitinkamai per mažas yra ir šešioliktainių (HEX) simbolių skirtumas. Idealiu atveju besiskiriančių HEX simbolių proporcija turėtų siekti apie 97 %, bet šiuo atveju ji tesiekė 50 %. Detalesnė rezultatų analizė bei vizuali duomenų reprezentacija (histograma) bus pateikta vėliau, papildžius aprasymas.md failą.
+
+### Eksperimentas 7
+--- 7 EKSPERIMENTAS: SPEJIMAS ---
+
+Kandidatu erdve: 0000 - 9999 (10,000 variantu)
+
+[1] ATAKA BE DRUSKOS
+Uzpuolikui pateikta maisa: 1096092ba9e1dc21779e4aff8acff8dd51ad55449330e1315b0dcbf8812ddddb
+Rasta ivestis: 7391
+Atlikta bandymu: 7392
+Veikimo laikas: 19794 mikrosekundziu.
+
+[2] ATAKA SU VIESA DRUSKA
+Zinoma druska (salt): 'X9qP'
+Uzpuolikui pateikta maisa: 30276f2bb3801821a8c380ff283de0dd6ebf9544dc61a751b68d699858dc30eb
+Rasta ivestis: 7391
+Atlikta bandymu: 7392
+Veikimo laikas: 17782 mikrosekundziu.
+
+Eksperimento rezultatai rodo, kad nulaužti 4 skaitmenų PIN kodą abiem atvejais užtruko labai panašiai – apie 18–20 milisekundžių. Nežymus laiko skirtumas (19.7 ms vs 17.7 ms) yra atsitiktinis ir priklauso nuo operacinės sistemos foninių procesų, o ne nuo druskos naudojimo. Tai patvirtina, kad vykdant tiesioginės paieškos (angl. *brute-force*) ataką prieš vieną konkretų taikinį, **viešos druskos pridėjimas paties spėliojimo nepasunkina** – užpuolikui vis tiek tenka patikrinti tuos pačius 10 000 variantų.
+
+Nors bendruoju atveju rasta sutampanti maiša (hash) nebūtinai garantuoja, kad rasta originali įvestis (dėl teorinės kolizijų galimybės), 256 bitų maišai ir tokiai mažai paieškos erdvei kolizijos tikimybė yra praktiškai nulinė. Todėl šiuo atveju rastas atitikmuo neabejotinai yra tikrasis PIN kodas.
+
+Nors vieša druska nesulėtina tiesioginės atakos, ji yra **esminė apsauga nuo iš anksto apskaičiuotų lentelių** (angl. *Rainbow tables*). Be druskos užpuolikas galėtų vieną kartą suskaičiuoti visų 10 000 PIN kodų maišas ir jas naudoti tūkstančiams nulaužtų paskyrų vienu metu. Su unikalia vieša druska šias lenteles tenka generuoti iš naujo kiekvienam vartotojui atskirai.
+
 # Šaltiniai
 - https://dev.to/alen_pythonista_bb/binary-file-handling-in-c-a-beginners-guide-148o
 - https://www.youtube.com/watch?v=gTfNtop9vzM

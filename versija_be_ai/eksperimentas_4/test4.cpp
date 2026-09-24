@@ -112,44 +112,52 @@ void vykdytiSpartosTesta(const string& filename) {
 
     std::cout << "Eilutės\tBaitai\tMin(ms)\tMax(ms)\tVidurkis(ms)\n";
 
-    // 2. Ciklas: 1, 2, 4, 8, 16... eilutės
-    for (int n = 1; n <= max_eiluciu; n *= 2) {
-        // A. Sudarome ištrauką iš n eilučių
-        std::vector<unsigned char> istrauka;
-        for (int i = 0; i < n; ++i) {
-            istrauka.insert(istrauka.end(), visos_eilutes[i].begin(), visos_eilutes[i].end());
-        }
-        size_t baitu_skaicius = istrauka.size();
+    std::vector<int> matuojami_kiekiai;
+for (int n = 1; n <= max_eiluciu; n *= 2) {
+    matuojami_kiekiai.push_back(n);
+}
+// Jei paskutinis dvejeto laipsnis neapėmė viso failo, pridedame visą failą
+if (matuojami_kiekiai.back() != max_eiluciu) {
+    matuojami_kiekiai.push_back(max_eiluciu);
+}
 
-        // B. Apšilimas (Warm-up) - paruošia CPU talpyklą (cache)
-        for(int i = 0; i < 5; ++i) {
-            string h = hash_algo(istrauka);
-            dummy += h[0];
-        }
+// 3. Ciklas per sudarytą sąrašą
+for (int n : matuojami_kiekiai) {
+    // A. Sudarome ištrauką iš n eilučių
+    std::vector<unsigned char> istrauka;
+    for (int i = 0; i < n; ++i) {
+        istrauka.insert(istrauka.end(), visos_eilutes[i].begin(), visos_eilutes[i].end());
+    }
+    size_t baitu_skaicius = istrauka.size();
 
-        // C. Atliekame 5 matavimus
-        double min_t = 9999999.0, max_t = 0.0, suma_t = 0.0;
+    // B. Apšilimas (Warm-up)
+    for(int i = 0; i < 5; ++i) {
+        string h = hash_algo(istrauka);
+        dummy += h[0];
+    }
+
+    // C. Atliekame 5 matavimus
+    double min_t = 9999999.0, max_t = 0.0, suma_t = 0.0;
+    
+    for (int m = 0; m < 5; ++m) {
+        auto start = std::chrono::high_resolution_clock::now();
         
-        for (int m = 0; m < 5; ++m) {
-            auto start = std::chrono::high_resolution_clock::now();
-            
-            // Kartojame, kad gautume pamatuojamą laiką
-            for(int i = 0; i < iteracijos; ++i) {
-                string h = hash_algo(istrauka);
-                dummy += h[0]; // Naudojame rezultatą, kad neištrintų kompiliatorius
-            }
-            
-            auto end = std::chrono::high_resolution_clock::now();
-            std::chrono::duration<double, std::milli> trukme = end - start;
-            
-            double vieno_hash_laikas = trukme.count() / iteracijos;
-            
-            if (vieno_hash_laikas < min_t) min_t = vieno_hash_laikas;
-            if (vieno_hash_laikas > max_t) max_t = vieno_hash_laikas;
-            suma_t += vieno_hash_laikas;
+        for(int i = 0; i < iteracijos; ++i) {
+            string h = hash_algo(istrauka);
+            dummy += h[0]; 
         }
+        
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> trukme = end - start;
+        
+        double vieno_hash_laikas = trukme.count() / iteracijos;
+        
+        if (vieno_hash_laikas < min_t) min_t = vieno_hash_laikas;
+        if (vieno_hash_laikas > max_t) max_t = vieno_hash_laikas;
+        suma_t += vieno_hash_laikas;
+    }
 
-        double vidurkis = suma_t / 5.0;
+    double vidurkis = suma_t / 5.0;
 
         // D. Spausdiname rezultatus lentelės formatu
         std::cout << n << "\t" << baitu_skaicius << "\t" 
