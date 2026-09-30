@@ -1,17 +1,17 @@
 Pradinė būsena
 
-Pradinę būseną sukuriu skirstant 256 bitų į keturis gabalus po 64, pradinė būsena užpildoma tribonačio sekos skaičiais. Išsiaiškinau, kad tribonačio sekos skaičiai ženkliai skiriasi pvz 70 ir 74 narys, teko sugalvoti apribojimą kad juos galima būtų sutalpinti į konteinerius ir parašyti šešioliktainiu formatu. Todėl pasirinkau 70, 71, 72, 73 sekos narius, jų atitikmenys pavaizduoti žemiau.
+Pradinę būseną sukuriu skirstant 256 bitus į keturis blokus po 64 bitus, pradinė būsena užpildoma tribonačio sekos skaičiais. Išsiaiškinau, kad tribonačio sekos skaičiai ženkliai skiriasi pvz 70 ir 74 narys, teko sugalvoti apribojimą kad juos galima būtų sutalpinti į konteinerius ir parašyti šešioliktainiu formatu. Todėl pasirinkau 70, 71, 72, 73 sekos narius, jų atitikmenys pavaizduoti žemiau.
 
 0xD6D12E7B5A03A401ULL = 15479308092729377793 
 0x8A59B51F41029312ULL = 9969146807112667922 
 0x32A398246E20349AULL = 3648012790626366618 
 0x7158932402138901ULL = 8167402682752305409 
 
-// Naudojame ULL (Unsigned Long Long), kad kompiliatorius tiksliai žinotų, jog tai 64 bitų skaičiai
+Naudojau ULL (Unsigned Long Long), kad kompiliatorius tiksliai žinotų, jog tai 64 bitų skaičiai
 
 Pirminis pildymas (padding)
 
-Toliau darome pirminį pildymą. Jis reikalingas tam, kad nesvarbu ką mes įvesim – vieną raidę, nieko, ar daug raidžių – mūsų blokas dalintųsi iš 32 (nes mano versijos blokai bus po 32 baitus). Visa likusia vieta, kurią atskirsime pabaiga, bus pripildyta pirminiais skaičiais 2, 3, 5, 7, 11 vietoj standartinio nulių. Pripildome masyve iš hard-coded sąrašo (kadangi neapsimoka tikrinti ar skaičius pirminis, kai jų pripildymas niekaip neviršys 32 baitų).
+Toliau darome pirminį pildymą. Jis reikalingas tam, kad nesvarbu ką mes įvesim – vieną raidę, nieko, ar daug raidžių – mūsų blokas dalintųsi iš 32 (nes mano versijos blokai bus po 32 baitus). Visa likusia vieta, kurią atskirsime pabaiga, bus pripildyta pirminiais skaičiais 2, 3, 5, 7, 11 vietoj standartinio nulių. Pripildome masyvą iš hard-coded sąrašo (kadangi neapsimoka tikrinti ar skaičius pirminis, kai jų pripildymas niekaip neviršys 32 baitų).
 
 1 eksperimentas
 
@@ -125,9 +125,46 @@ Programa baigia darba.
 
 Iš eksperimento rezultatų matosi, kad A,B,A determinizmo testas veikia teisingai, ir pirma įvestis nuo trečios nesiskiria.
 
-4 ir 5 eksperimentai
 
-======================================================== KOLIZIJU EKSPERIMENTAS (custom_hashas)
+4 eksperimentas
+
+Atlikus 4 eksperimentą, prieš tai paleidus kodą 5 kartus, gavau šiuos rezultatus:
+
+Failas sekmingai nuskaitytas. Viso eiluciu: 789
+
+| Eilutės | Baitai | Min laikas (ms) | Max laikas (ms) | Vidurkis (ms) |
+|---------|--------|-----------------|-----------------|---------------|
+| 1       | 70     | 0.002508        | 0.003044        | 0.002618      |
+| 2       | 123    | 0.002355        | 0.002927        | 0.002555      |
+| 4       | 205    | 0.001596        | 0.002669        | 0.002427      |
+| 8       | 362    | 0.001395        | 0.001455        | 0.001412      |
+| 16      | 996    | 0.002647        | 0.006521        | 0.003434      |
+| 32      | 1841   | 0.004541        | 0.007650        | 0.005207      |
+| 64      | 3712   | 0.008497        | 0.010098        | 0.008860      |
+| 128     | 9155   | 0.019809        | 0.023598        | 0.021389      |
+| 256     | 20409  | 0.060221        | 0.068681        | 0.065041      |
+| 512     | 47434  | 0.093510        | 0.127800        | 0.107102      |
+| 789     | 75595  | 0.143321        | 0.148962        | 0.145796      |
+
+
+Failas: `konstitucija.txt` (UTF-8 formatas).
+Laikmatis: `std::chrono::high_resolution_clock`.
+Kompiliavimo konfigūracija:** `[g++ sparta.cpp -o sparta -O3]`
+Metodika: I/O operacijos (failo skaitymas, išvestis į ekraną) į matavimus neįtrauktos.
+
+Tendencija: Analizuojant duomenis matyti, kad nuo ~1000 baitų (16 eilučių) maišos skaičiavimo laikas auga tiesiškai (O(n) sudėtingumas). Tai logiška ir atitinka blokinio maišymo algoritmų veikimo principus – kuo daugiau duomenų blokų, tuo ilgiau užtrunka iteracijos.
+Anomalijos: Pastebima anomalija su pačiais mažiausiais duomenų kiekiais (nuo 1 iki 8 eilučių). Skaičiuojant 362 baitų ištrauką (0.0014 ms), laikas buvo netgi trumpesnis nei skaičiuojant 70 baitų ištrauką (0.0026 ms). Kadangi laikai yra mikrosekundžių eilės (paversti į ms), tokiems mažiems dydžiams matavimų paklaidą stipriai veikia procesoriaus talpyklos (L1/L2 cache) būsena, operacinės sistemos foniniai procesai bei pats funkcijos iškvietimo laikas, kuris tampa santykinai didesnis už patį skaičiavimą.
+
+```mermaid
+xychart-beta
+    title "Spartos grafikas (Maišos laikas pagal įvesties dydį)"
+    x-axis "Baitai" [70, 123, 205, 362, 996, 1841, 3712, 9155, 20409, 47434, 75595]
+    y-axis "Laikas (ms)" 0 --> 0.16
+    line [0.0026, 0.0025, 0.0024, 0.0014, 0.0034, 0.0052, 0.0088, 0.0213, 0.0650, 0.1071, 0.1457]
+```
+
+5 eksperimentas
+
 
 Abecele: ASCII spausdinami simboliai [32..126] 
 Generatoriaus pradine reiksme (Seed): 2026 
@@ -169,15 +206,13 @@ Tekstas: 1111111111111111 | Hash: bfb7f7c32c05d97edc961dcc2cdab2e1ae3ddf2e80c4a4
 Tekstas: 0000000000000001 | Hash: 56951a1c1d341d2251cc4c7bef96dcc26fe689c5a72aa8fa989ee3aad39e93ed 
 Tekstas: 0000000000000002 | Hash: 499bb28c06618837ebab231a37ad71b94d067123e092e0df8b25e64f866dc17b
 
-Strukturiniu koliziju rasta: 0
+Kolizijų rasta: 0
 
-custom_hashas algoritmo išvestis susideda iš 4 uint64_t būsenos kintamųjų, todėl bendras maišos ilgis yra 256 bitai (n = 256). Idealios 256 bitų maišos funkcijos atveju vienos nesusijusių įvesčių poros kolizijos tikimybė: P_poros = 2^-256 (maždaug 8.63 x 10^-78). Ši tikimybė yra praktiškai lygi nuliui, todėl 100 000 porų bandyme rasti koliziją atsitiktinai neįmanoma.
+Iš rezultatų pastebime, kad kolizijos neaptinkame. Kaip buvo minėta paskaitoje, tikimybė gauti koliziją itin maža. Panaudojus formules kurios yra pateiktos užduoties salygoje, kolizijos tikimybė yra tik 2^-256 (neįsivaizduojamai mažas skaičius), o eksperimentui buvo sugeneruota tik m=200000 skirtingų įvesčių vienam lygiui. Pagal kitą pateiktą formulę seka jog bendras galimų porų skaičius yra 2x10^10 (20 milijardų, jei teisingai paskaičiavau). Nors 20 milijardų atrodytų didelis skaičius, tikimybė yra maža kadangi galimų visų hash  reikšmių yra 2^256, o tai yra neįsivaizduojamai didelis skaičius, palyginus su 20 milijardų. Empirinis 200,000 eilučių patikrinimas apima tik nykstamai mažą įvesčių erdvės dalį. Kolizijų neradimas atsitiktiniu būdu įrodo tik tai, kad maišos funkcija neturi visiškai trivialių klaidų (pvz., kad visiems įvesties variantams negrąžina tos pačios reikšmės).
 
-Empirinis 200,000 eilučių patikrinimas apima tik nykstamai mažą įvesčių erdvės dalį. Kolizijų neradimas atsitiktiniu būdu įrodo tik tai, kad maišos funkcija neturi visiškai trivialių klaidų (pvz., kad visiems įvesties variantams negrąžina tos pačios reikšmės).
 
 6 eksperimentas
 
-========================================================= LAVINOS EFEKTO (AVALANCHE) TESTAS
 
 Generuojama 100,000 poru (po 25,000 pagal 4 ilgius) 
 Abecele: ASCII [32..126], Seed: 2026 
@@ -225,23 +260,24 @@ Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.76%
 Bitu skirtumas (%) | Min: 36.72% | Max: 63.28% | Vid: 49.99% 
 Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.75%
 
-BITŲ SKIRTUMO (%) HISTOGRAMA 
-0% - 9% | (0) 
-10% - 19% | (0) 
-20% - 29% | (0) 
-30% - 39% | (36) 
-40% - 49% | ****************************************** (42522) 
-50% - 59% | ********************************************************* (57338) 
-60% - 69% | (104) 
-70% - 79% | (0) 
-80% - 89% | (0) 
-90% - 99% | (0)
+```mermaid
+xychart-beta
+    title "Bitų skirtumo (%) histograma"
+    x-axis "Rėžiai (%)" ["0-9", "10-19", "20-29", "30-39", "40-49", "50-59", "60-69", "70-79", "80-89", "90-99"]
+    y-axis "Porų skaičius" 0 --> 60000
+    bar [0, 0, 0, 36, 42522, 57338, 104, 0, 0, 0]
+```
 
-Įvesties ilgis neturi jokios pastebimos įtakos maišymo kokybei. Nesvarbu, ar tekstas trumpas (10 B), ar ilgas (1000 B), algoritmo difuzija išlieka tvari. Tai įrodo, kad algoritmo užpildymo (padding) bei blokinio maišymo ciklas veikia vienodai efektyviai per visą duomenų srautą. custom_hashas funkcija puikiai išlaiko lavinos efekto testą. Ji pasižymi stipria difuzija (angl. diffusion) ir pseudorandomiškumu — bet koks 1 bito ar 1 simbolio pokytis įvestyje sukelia atsitiktinį ir nepriklausomą ~50% išvesties bitų pasikeitimą.
+
+Įvesties ilgis neturi jokios pastebimos įtakos maišymo kokybei. Nesvarbu, ar tekstas trumpas 10 baitai, ar ilgas 1000 baitų. Tai įrodo, kad algoritmo užpildymo (padding) bei blokinio maišymo ciklas veikia vienodai efektyviai per visą duomenų srautą. custom_hashas funkcija puikiai išlaiko lavinos efekto testą, nes, bet koks 1 bito ar 1 simbolio pokytis įvestyje sukelia atsitiktinį ir nepriklausomą ~50% išvesties bitų pasikeitimą, kas yra panašu kaip ir taikant SHA-256 ir MD5 metodus.
+
+Funkcija gali rodyti idealų lavinos efektą, bet vis tiek leisti lengvai rasti kolizijas. Lavinos efektas įrodo tik gerą difuziją, bet negarantuoja vienakryptiškumo. Jei algoritmas naudoja tik paprastas, apverčiamas operacijas (pvz., tik XOR ir poslinkius), atvirkštine inžinerija galima apskaičiuoti vienodas išvestis duodančias įvestis.
+
+Šią silpnybę atskleistų kolizijų paieškos testas pvz., paskaitoje minėto  gimtadienio paradoksu. Lavinos testas kolizijų neranda, nes lygina tik 1 bitu besiskiriančias poras, o kolizijos dažniausiai atsiranda tarp visiškai skirtingų tekstų.
+
 
 7 eksperimentas
 
-======================================================== PERRINKIMO (BRUTE-FORCE) ATAKOS EKSPERIMENTAS
 
 [1] PERRINKIMAS BE DRUSKOS 
 Ieskoma hash reiksme: c869f12ca528ff1fda73caea54ceb32fbdfd980870697b6c192088209aa38a45 
@@ -256,4 +292,6 @@ Ieskoma hash reiksme: 7c3c620362b161a768a2788dec01d08fb940b8379ec113f6746115492e
 -> Atlikta bandymu: 7393 
 -> Uztruko laiko: 3 ms
 
-Eksperimentas įrodo, kad naudojant greitas maišos funkcijas, mažos įvesčių erdvės (pvz., 4 skaitmenų PIN) perrinkimas įvyksta per kelias milisekundes, o rastas sutapimas vienareikšmiškai identifikuoja pradinę įvestį. Viešos druskos pridėjimas nepailgina pavienio taikinio nulaužimo laiko, tačiau sėkmingai neutralizuoja masines atakas, pagrįstas iš anksto apskaičiuotų rezultatų lentelėmis (angl. rainbow tables). Norint realiai apsaugoti trumpas paslaptis nuo perrinkimo, būtina naudoti didelę slaptą atsitiktinę reikšmę (kaip įsipareigojimo schemose) arba specializuotas, skaičiavimo resursams imlias slaptažodžių maišos funkcijas, tokias kaip „Argon2id“.
+    Eksperimentas įrodo, kad naudojant greitas maišos funkcijas, mažos įvesčių erdvės (pvz., 4 skaitmenų PIN) perrinkimas įvyksta per kelias milisekundes, o rastas sutapimas vienareikšmiškai identifikuoja pradinę įvestį. Viešos druskos pridėjimas nepailgina pavienio taikinio nulaužimo laiko, tačiau sėkmingai neutralizuoja masines atakas, pagrįstas iš anksto apskaičiuotų rezultatų lentelėmis (angl. rainbow tables). Norint realiai apsaugoti trumpas paslaptis nuo perrinkimo, būtina naudoti didelę slaptą atsitiktinę reikšmę (kaip įsipareigojimo schemose) arba specializuotas, skaičiavimo resursams imlias slaptažodžių maišos funkcijas.
+
+    Praktikoje tokioje mažoje aibėje (10 000 kandidatų) rastas sutapimas vienareikšmiškai identifikuoja pradinę įvestį, nes kolizijų tikimybė su gera maišos funkcija yra artima nuliui. Teoriškai, jei įvyktų kolizija (du skirtingi PIN duotų tą patį hash'ą), vienareikšmio atpažinimo nebūtų. Kai skaičiuojama H(input || r), o r (slaptas atsitiktinumas) iš pradžių yra nežinomas, paieškos erdvė drastiškai pasikeičia. Paieškos erdvė: Ji išauga nuo 10 000 iki 10000x2^r. Jei r yra pakankamai ilgas (pvz., 256 bitų), viso didelės erdvės perrinkimo atlikti praktiškai neįmanoma. Patikrinimas atskleidus r: kai autorius vėliau paviešina ir input, ir r, bet kas gali apskaičiuoti maišą ir patikrinti, ar ji sutampa su anksčiau paskelbta. Tai įrodo, kad autorius iš anksto žinojo pranešimą ir jo vėliau nepakeitė, bet iki atskleidimo niekas negalėjo jo perskaityti.
