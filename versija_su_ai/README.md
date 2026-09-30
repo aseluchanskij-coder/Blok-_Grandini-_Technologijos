@@ -1,4 +1,61 @@
-Pradinė būsena
+# Blokų grandinių technologijos: Maišos funkcijos (Hash) realizacija
+
+## Kompiliavimo ir paleidimo instrukcijos
+
+Projektas parašytas C++ kalba. Kompiliavimui nereikalingos papildomos išorinės bibliotekos (naudojamos tik standartinės).
+
+**Kompiliavimas:**
+```bash```
+g++ main.cpp -o programa -O3
+
+Paleidimas:
+Programa palaiko du režimus:
+
+[1] Teksto įvedimas ranka: ./programa (paleidus be argumentų, programa paprašys įvesti tekstą konsolėje).
+[2] Skaitymas iš failo: ./programa <failo_pavadinimas> (pvz., ./programa test.txt).
+
+Įvesties kodavimas: Baitų srautas (vector<uint8_t>). Skaitomi bet kokie ASCII, UTF-8 ar ne spausdinami binariniai duomenys.
+
+Maišos ilgis: 256 bitai. Išvestis pateikiama kaip 64 simbolių ilgio šešioliktainė (hex) eilutė.
+
+Trumpa projekto "summary": 
+
+Pradinė būsena: Naudojami Tribonačio sekos nariai (64 bitų dydžio), kad būtų išvengta "magiškų skaičių" ir užtikrintas pseudoatsitiktinumas iš pat pradžių.
+
+Pirminis pildymas (Padding): Pridedamas 0x80 baitas, likusi bloko dalis užpildoma ne nuliais, o pirminiais skaičiais (sąrašas iš 32 pirminių skaičių). Tai padidina pradinę difuziją. Pabaigoje visada pridedamas 64 bitų originalus žinutės ilgis, kas apsaugo nuo ilgio praplėtimo atakų.
+
+Maišymas (Mixing): Maišoma 32 baitų (256 bitų) blokais. Kad būtų išvengta simetrijos, kas antras blokas yra apverčiamas (baitai skaitomi nuo galo). Blokas dalinamas į keturis 64-bitų žodžius ir apdorojamas per 16 raundų, naudojant bitų poslinkius (sukimą į kairę), XOR operacijas ir sudėtį.
+
+Pseudokodas: 
+
+Funkcija custom_hash(ivestis):
+  Būsena state[4] = {Tribonačio sekos skaičiai}
+  Pirminiai skaičiai prime_array[32] = {2, 3, 5, 7, ...}
+  
+  Pridėti 0x80 prie ivestis
+  Kol (ivestis ilgis + 8) % 32 != 0:
+    Pridėti prime_array[ivestis ilgis % 32]
+  
+  Pridėti originalų ivestis ilgį (8 baitai)
+  Padalinti ivestis į 32 baitų blokus
+  
+  Kiekvienam blokui b:
+    Jei b yra nelyginis:
+      Apversti bloko baitų tvarką
+      
+    Padalinti bloką į 4 žodžius po 8 baitus: m[0], m[1], m[2], m[3]
+    
+    Kartoti 16 kartų:
+       state[0] = suktiKaire(state[0] XOR m[0], 19) + state[1]
+       state[1] = suktiKaire(state[1] XOR m[1], 29) + state[2]
+       state[2] = suktiKaire(state[2] XOR m[2], 37) + state[3]
+       state[3] = suktiKaire(state[3] XOR m[3], 43) + state[0]
+       state[0] = state[0] XOR state[2]
+       state[1] = state[1] XOR state[3]
+       
+  Grąžinti state kaip 64 simbolių hex eilutę
+
+Kūrimo eiga:
 
 Pradinę būseną sukuriu skirstant 256 bitus į keturis blokus po 64 bitus, pradinė būsena užpildoma tribonačio sekos skaičiais. Išsiaiškinau, kad tribonačio sekos skaičiai ženkliai skiriasi pvz 70 ir 74 narys, teko sugalvoti apribojimą kad juos galima būtų sutalpinti į konteinerius ir parašyti šešioliktainiu formatu. Todėl pasirinkau 70, 71, 72, 73 sekos narius, jų atitikmenys pavaizduoti žemiau.
 
@@ -295,3 +352,19 @@ Ieskoma hash reiksme: 7c3c620362b161a768a2788dec01d08fb940b8379ec113f6746115492e
     Eksperimentas įrodo, kad naudojant greitas maišos funkcijas, mažos įvesčių erdvės (pvz., 4 skaitmenų PIN) perrinkimas įvyksta per kelias milisekundes, o rastas sutapimas vienareikšmiškai identifikuoja pradinę įvestį. Viešos druskos pridėjimas nepailgina pavienio taikinio nulaužimo laiko, tačiau sėkmingai neutralizuoja masines atakas, pagrįstas iš anksto apskaičiuotų rezultatų lentelėmis (angl. rainbow tables). Norint realiai apsaugoti trumpas paslaptis nuo perrinkimo, būtina naudoti didelę slaptą atsitiktinę reikšmę (kaip įsipareigojimo schemose) arba specializuotas, skaičiavimo resursams imlias slaptažodžių maišos funkcijas.
 
     Praktikoje tokioje mažoje aibėje (10 000 kandidatų) rastas sutapimas vienareikšmiškai identifikuoja pradinę įvestį, nes kolizijų tikimybė su gera maišos funkcija yra artima nuliui. Teoriškai, jei įvyktų kolizija (du skirtingi PIN duotų tą patį hash'ą), vienareikšmio atpažinimo nebūtų. Kai skaičiuojama H(input || r), o r (slaptas atsitiktinumas) iš pradžių yra nežinomas, paieškos erdvė drastiškai pasikeičia. Paieškos erdvė: Ji išauga nuo 10 000 iki 10000x2^r. Jei r yra pakankamai ilgas (pvz., 256 bitų), viso didelės erdvės perrinkimo atlikti praktiškai neįmanoma. Patikrinimas atskleidus r: kai autorius vėliau paviešina ir input, ir r, bet kas gali apskaičiuoti maišą ir patikrinti, ar ji sutampa su anksčiau paskelbta. Tai įrodo, kad autorius iš anksto žinojo pranešimą ir jo vėliau nepakeitė, bet iki atskleidimo niekas negalėjo jo perskaityti.
+
+
+    8 eksperimentas
+
+    Šis skyrius apibendrina visų eksperimentų rezultatus, remiantis paskaitų medžiaga.
+
+Lavinos efektas (Avalanche Effect): Eksperimentai (6 ekspr.) įrodė, kad algoritmas pasižymi stipriu lavinos efektu. Net vieno bito ar simbolio pakeitimas įvestyje vidutiniškai pakeičia ~50% išvesties bitų. Tai rodo gerą difuziją, atitinkančią patikimų maišos reikšmių reikalavimus.
+
+Kolizijos (Collisions): Generuojant 200,000 atsitiktinių porų ir testuojant skirtingus ilgius (5 ekspr.), kolizijų nebuvo aptikta. Tai parodo, kad algoritmas neturi trivialių struktūrinių klaidų.
+
+Pirmavaizdžiai (Preimages): Pirmavaizdžio radimas remiasi funkcijų negrįžtamumu. Kaip parodė 7 eksperimentas, trumpiems tekstams (pvz., PIN kodams) rasti pirmavaizdį (įvestį iš turimos maišos) trunka vos kelias milisekundes dėl greito algoritmo veikimo ir mažos paieškos aibės. Taikant druską (angl. salt), masinis pirmavaizdžių paieškos vektorius (pvz., per rainbow tables) yra efektyviai neutralizuojamas.
+
+Patikimos maišos reikšmės: Gautos maišos yra patikimos kasdieniam duomenų vientisumo tikrinimui (pvz., failų modifikacijoms sekti), nes atkuriami testai (3 ekspr. determinizmo testas) rodo stabilų veikimą.
+
+Teiginiai, kurių eksperimentai negali pagrįsti:
+Nors kolizijų ieškiklis (5 ekspr.) jų nerado, negalima pagrįsti teiginio, kad funkcija yra visiškai atspari kolizijoms. Mūsų testuota 200,000 įvesčių aibė yra nykstamai maža lyginant su teorine $2^{256}$ erdve. Taip pat, nors lavinos efektas puikus, tai neįrodo algoritmo kriptografinio saugumo – algoritmas gali būti pažeidžiamas atvirkštinei inžinerijai, kurios šie empiriniai testai neapima.
