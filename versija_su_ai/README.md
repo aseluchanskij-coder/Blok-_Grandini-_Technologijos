@@ -1,31 +1,44 @@
-Pradines busena sukuriu skirstant 256 bitu i keturis gabalus po 64, pradinė bubena uzpildidamais tribonacio sekos skaiciais. Issiaiskinau kad tribonaci sekos skaičiai ženkliai skiriasi pvz 70 ir 74 narys, teko sugalvoti apribojime kad juos galima butu sutalpinti i konteinerius ir parasyti sesioliktainiu formatu. Todel pasirinkau 70,71,72,73 sekos narius, ju atitikmenys pavaizduoti zemiau. 0xD6D12E7B5A03A401ULL = 15479308092729377793 0x8A59B51F41029312ULL = 9969146807112667922 0x32A398246E20349AULL = 3648012790626366618 0x7158932402138901ULL = 8167402682752305409 // Naudojame ULL (Unsigned Long Long), kad kompiliatorius tiksliai žinotų, jog tai 64 bitų skaičiai
+Pradinė būsena
 
-Toliau medaus daryti pirmini pildyma (padding). Jis reikalingas tam kad nesvarbu ka mes ivesin viena raide, nieko, ar daug raidziu, musu blokas dalintusi is 32 (nes musu mano versijos blokai bus po 32 baitus). Visa likusia vieta kuria atskirsime pabaiga bus pripildyta pirminiais skaiciais 2,3,5,7,11 vietoj standartinio nuliu. Pripildome masyve is hard coded saraso (kadangi neapsimoka tikrinti ar skaičius pirminis kai ju pripildymas niekaip nevirsiu 32 baitu).
+Pradinę būseną sukuriu skirstant 256 bitų į keturis gabalus po 64, pradinė būsena užpildoma tribonačio sekos skaičiais. Išsiaiškinau, kad tribonačio sekos skaičiai ženkliai skiriasi pvz 70 ir 74 narys, teko sugalvoti apribojimą kad juos galima būtų sutalpinti į konteinerius ir parašyti šešioliktainiu formatu. Todėl pasirinkau 70, 71, 72, 73 sekos narius, jų atitikmenys pavaizduoti žemiau.
+
+0xD6D12E7B5A03A401ULL = 15479308092729377793 
+0x8A59B51F41029312ULL = 9969146807112667922 
+0x32A398246E20349AULL = 3648012790626366618 
+0x7158932402138901ULL = 8167402682752305409 
+
+// Naudojame ULL (Unsigned Long Long), kad kompiliatorius tiksliai žinotų, jog tai 64 bitų skaičiai
+
+Pirminis pildymas (padding)
+
+Toliau darome pirminį pildymą. Jis reikalingas tam, kad nesvarbu ką mes įvesim – vieną raidę, nieko, ar daug raidžių – mūsų blokas dalintųsi iš 32 (nes mano versijos blokai bus po 32 baitus). Visa likusia vieta, kurią atskirsime pabaiga, bus pripildyta pirminiais skaičiais 2, 3, 5, 7, 11 vietoj standartinio nulių. Pripildome masyve iš hard-coded sąrašo (kadangi neapsimoka tikrinti ar skaičius pirminis, kai jų pripildymas niekaip neviršys 32 baitų).
 
 1 eksperimentas
 
-Pirmojoje lentelėje buvo patikrinti hash su skirtingu failu ivestimi:
-| Failo tipas                                                                        | Gautas hash                                                      |
-|------------------------------------------------------------------------------------|------------------------------------------------------------------|
-| Hashas su vieno baito ivestimi 'a':                                                | d417829f4b73db6cfce0f37fa44cad1163fa1376935903c0ff668df9701541c7 |
-| Hashas su vieno baito ivestimi 'b':                                                | 6e26a9a388d4fab2e3810326cf6656ed88e4f920d807b06157f62e0fb38bdeb3 |
-| Hashas su >1000 baitu ascii teksto ivestimi:                                       | 5aa4473a828c5d106ce2e6873fed63cb070d9de24253dc07940b93a753d42cce |
-| Hashas su >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas:          | 5054f047bf43a80966ca6107dffaeb1b0c4cdf22f291d4e038c7184d08dbe69d |
-| Hashas su kita >1000 baitu ascii teksto ivestimi:                                  | 5c81812f1de0ea83e32fff9b77ec1a6f343cef82dbec1bd08eb7439b35ce3502 |
-| Hashas su kita >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas:     | e737e630a4ab1534369bb517e8eef389d4b567ff87e8e0deec80cec0d7ee9d56 |
-| Hashas su dar kita >1000 baitu ascii teksto ivestimi:                              | 73812a02e20f44b0096a4b62fb9a216fde4a45a085263e5a5118d3136d0c3f42 |
-| Hashas su dar kita >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas: | 44ea090362c7ea28e4ae0dc35269dd9d94cc9d4d9cfeea5d05c12736d6ba0b8c |
-| Hashas su strukturuota pasikartojancios raides ivestimi (AAA...AAA):               | 822b45ab8494346c88c8ee6ca11d191bd27ce05c145dc9abd380e847918e1f29 |
-| Hashas su strukturuota ivestimi su '/n' simboliu (ABC / abc)                       | cc15da605c19a348650b9f538df4723e6b55a1c689a25306667b0e6f2b4f90e6 |
-| Hashas su ne ascii simboliu ivestimi:                                              | 32e7f014bda6619ab29ea388f6a7198de3882818f56f7a656f412f189599afe7 |
+Pirmojoje lentelėje buvo patikrinti hash su skirtingu failų įvestimi:
 
-Išvados: vienodu hash nėra, iš to galime spręsti, jog skaitymas vyksta taisyklingai.
+| Failo tipas | Gautas hash |
+|---|---|
+| Hashas su vieno baito ivestimi 'a': | d417829f4b73db6cfce0f37fa44cad1163fa1376935903c0ff668df9701541c7 |
+| Hashas su vieno baito ivestimi 'b': | 6e26a9a388d4fab2e3810326cf6656ed88e4f920d807b06157f62e0fb38bdeb3 |
+| Hashas su >1000 baitu ascii teksto ivestimi: | 5aa4473a828c5d106ce2e6873fed63cb070d9de24253dc07940b93a753d42cce |
+| Hashas su >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas: | 5054f047bf43a80966ca6107dffaeb1b0c4cdf22f291d4e038c7184d08dbe69d |
+| Hashas su kita >1000 baitu ascii teksto ivestimi: | 5c81812f1de0ea83e32fff9b77ec1a6f343cef82dbec1bd08eb7439b35ce3502 |
+| Hashas su kita >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas: | e737e630a4ab1534369bb517e8eef389d4b567ff87e8e0deec80cec0d7ee9d56 |
+| Hashas su dar kita >1000 baitu ascii teksto ivestimi: | 73812a02e20f44b0096a4b62fb9a216fde4a45a085263e5a5118d3136d0c3f42 |
+| Hashas su dar kita >1000 baitu ascii teksto ivestimi, kai pakeistas vienas baitas: | 44ea090362c7ea28e4ae0dc35269dd9d94cc9d4d9cfeea5d05c12736d6ba0b8c |
+| Hashas su strukturuota pasikartojancios raides ivestimi (AAA...AAA): | 822b45ab8494346c88c8ee6ca11d191bd27ce05c145dc9abd380e847918e1f29 |
+| Hashas su strukturuota ivestimi su '/n' simboliu (ABC / abc) | cc15da605c19a348650b9f538df4723e6b55a1c689a25306667b0e6f2b4f90e6 |
+| Hashas su ne ascii simboliu ivestimi: | 32e7f014bda6619ab29ea388f6a7198de3882818f56f7a656f412f189599afe7 |
+
+Išvados: vienodų hash nėra, iš to galime spręsti, jog skaitymas vyksta taisyklingai.
 
 2 eksperimentas
 
 Visų pirma patikrinau, ar ranka ir skaitymas iš teksto duoda tą patį hash išvestį, kai įvedame/skaitome tą patį simbolį, šiuo atveju "a":
 
 1) Įvedimas ranka:
+
 Pasirinkite ivesties buda:
 1 - Ivesti teksta ranka
 2 - Nuskaityti is failo
@@ -112,71 +125,135 @@ Programa baigia darba.
 
 Iš eksperimento rezultatų matosi, kad A,B,A determinizmo testas veikia teisingai, ir pirma įvestis nuo trečios nesiskiria.
 
-4 eksperimentas
-5 eksperimentas
+4 ir 5 eksperimentai
+
 ======================================================== KOLIZIJU EKSPERIMENTAS (custom_hashas)
-Abecele: ASCII spausdinami simboliai [32..126] Generatoriaus pradine reiksme (Seed): 2026 Poru skaicius kiekvienam ilgiui: 100000
+
+Abecele: ASCII spausdinami simboliai [32..126] 
+Generatoriaus pradine reiksme (Seed): 2026 
+Poru skaicius kiekvienam ilgiui: 100000
+
 Tikrinamas ilgis: 10 baitu
 Porose rastu koliziju skaicius: 0 / 100000
 Skirtingu sugeneruotu ivesciu skaicius: 200000
 Skirtingu ivesciu grupiu (unikaliu hash): 200000
 Viso rinkinio koliziju skaicius: 0
+
 Tikrinamas ilgis: 100 baitu
 Porose rastu koliziju skaicius: 0 / 100000
 Skirtingu sugeneruotu ivesciu skaicius: 200000
 Skirtingu ivesciu grupiu (unikaliu hash): 200000
 Viso rinkinio koliziju skaicius: 0
+
 Tikrinamas ilgis: 500 baitu
 Porose rastu koliziju skaicius: 0 / 100000
 Skirtingu sugeneruotu ivesciu skaicius: 200000
 Skirtingu ivesciu grupiu (unikaliu hash): 200000
 Viso rinkinio koliziju skaicius: 0
+
 Tikrinamas ilgis: 1000 baitu
 Porose rastu koliziju skaicius: 0 / 100000
 Skirtingu sugeneruotu ivesciu skaicius: 200000
 Skirtingu ivesciu grupiu (unikaliu hash): 200000
 Viso rinkinio koliziju skaicius: 0
+
 ======================================================== STRUKTŪRUOTŲ ĮVESČIŲ TIKRINIMAS
-Tekstas: ABCDEFGHIJKLMNOP | Hash: e4fe39fdd09b9639b181d58800a4704c1129ea622d7d1a15ef287c0d478f2c49 Tekstas: BACDEFGHIJKLMNOP | Hash: 8eb7b60894008ee8c6e35eac7edcab3716009d8d7eec7799c73d44c9ba4a55fb Tekstas: PONMLKJIHGFEDCBA | Hash: 9518ab29eb58239f0293b65f277d499cc3ceff6ea0c252e8c9806896405ac142 Tekstas: AAAAAAAAAAAAAAAA | Hash: 3327633bfdff4feb885fa134728a968111ed5c62c75f463b961a944877eca1c7 Tekstas: ABABABABABABABAB | Hash: 489ce59eb199ad45c418b16068e865515eeef4f76d54655881ccffb7f5d0b20e Tekstas: 0000000000000000 | Hash: 1a1d85ae77d7cbc79ed7df185fc88084f6090272aca5b7283f61374d21b54efc Tekstas: 1111111111111111 | Hash: bfb7f7c32c05d97edc961dcc2cdab2e1ae3ddf2e80c4a43d7c96b773c6baae0d Tekstas: 0000000000000001 | Hash: 56951a1c1d341d2251cc4c7bef96dcc26fe689c5a72aa8fa989ee3aad39e93ed Tekstas: 0000000000000002 | Hash: 499bb28c06618837ebab231a37ad71b94d067123e092e0df8b25e64f866dc17b
+
+Tekstas: ABCDEFGHIJKLMNOP | Hash: e4fe39fdd09b9639b181d58800a4704c1129ea622d7d1a15ef287c0d478f2c49 
+Tekstas: BACDEFGHIJKLMNOP | Hash: 8eb7b60894008ee8c6e35eac7edcab3716009d8d7eec7799c73d44c9ba4a55fb 
+Tekstas: PONMLKJIHGFEDCBA | Hash: 9518ab29eb58239f0293b65f277d499cc3ceff6ea0c252e8c9806896405ac142 
+Tekstas: AAAAAAAAAAAAAAAA | Hash: 3327633bfdff4feb885fa134728a968111ed5c62c75f463b961a944877eca1c7 
+Tekstas: ABABABABABABABAB | Hash: 489ce59eb199ad45c418b16068e865515eeef4f76d54655881ccffb7f5d0b20e 
+Tekstas: 0000000000000000 | Hash: 1a1d85ae77d7cbc79ed7df185fc88084f6090272aca5b7283f61374d21b54efc 
+Tekstas: 1111111111111111 | Hash: bfb7f7c32c05d97edc961dcc2cdab2e1ae3ddf2e80c4a43d7c96b773c6baae0d 
+Tekstas: 0000000000000001 | Hash: 56951a1c1d341d2251cc4c7bef96dcc26fe689c5a72aa8fa989ee3aad39e93ed 
+Tekstas: 0000000000000002 | Hash: 499bb28c06618837ebab231a37ad71b94d067123e092e0df8b25e64f866dc17b
 
 Strukturiniu koliziju rasta: 0
 
-custom_hashas algoritmo išvestis susideda iš 4 \text{uint64\_t} būsenos kintamųjų, todėl bendras maišos ilgis yra 256 bitai (n = 256). Idealios 256 bitų maišos funkcijos atveju:Vienos nesusijusių įvesčių poros kolizijos tikimybė:P_{\text{poros}} = 2^{-n} = 2^{-256} \approx 8.63 \times 10^{-78}Ši tikimybė yra praktiškai lygi nuliui, todėl 100 000 porų bandyme rasti koliziją atsitiktinai neįmanoma.
+custom_hashas algoritmo išvestis susideda iš 4 uint64_t būsenos kintamųjų, todėl bendras maišos ilgis yra 256 bitai (n = 256). Idealios 256 bitų maišos funkcijos atveju vienos nesusijusių įvesčių poros kolizijos tikimybė: P_poros = 2^-256 (maždaug 8.63 x 10^-78). Ši tikimybė yra praktiškai lygi nuliui, todėl 100 000 porų bandyme rasti koliziją atsitiktinai neįmanoma.
 
-Empirinis 200\,000 eilučių patikrinimas apima tik nykstamai mažą įvesčių erdvės dalį. Kolizijų neradimas atsitiktiniu būdu įrodo tik tai, kad maišos funkcija neturi visiškai trivialių klaidų (pvz., kad visiems įvesties variantams negrąžina tos pačios reikšmės).
+Empirinis 200,000 eilučių patikrinimas apima tik nykstamai mažą įvesčių erdvės dalį. Kolizijų neradimas atsitiktiniu būdu įrodo tik tai, kad maišos funkcija neturi visiškai trivialių klaidų (pvz., kad visiems įvesties variantams negrąžina tos pačios reikšmės).
 
 6 eksperimentas
+
 ========================================================= LAVINOS EFEKTO (AVALANCHE) TESTAS
-Generuojama 100,000 poru (po 25,000 pagal 4 ilgius) Abecele: ASCII [32..126], Seed: 2026 Orientaciniai vidurkiai: Bitams ~50.0%, Hex ~93.75%
+
+Generuojama 100,000 poru (po 25,000 pagal 4 ilgius) 
+Abecele: ASCII [32..126], Seed: 2026 
+Orientaciniai vidurkiai: Bitams ~50.0%, Hex ~93.75%
 
 REZULTATAI ILGIUI: 10 baitu (25,000 poru)
-[1 Simbolio pakeitimas]: Bitu skirtumas (%) | Min: 36.33% | Max: 62.89% | Vid: 49.99% Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.73% [1 Bito apvertimas (Bit-flip)]: Bitu skirtumas (%) | Min: 37.89% | Max: 63.28% | Vid: 49.98% Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.76%
+[1 Simbolio pakeitimas]: 
+Bitu skirtumas (%) | Min: 36.33% | Max: 62.89% | Vid: 49.99% 
+Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.73% 
+[1 Bito apvertimas (Bit-flip)]: 
+Bitu skirtumas (%) | Min: 37.89% | Max: 63.28% | Vid: 49.98% 
+Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.76%
 
 REZULTATAI ILGIUI: 100 baitu (25,000 poru)
-[1 Simbolio pakeitimas]: Bitu skirtumas (%) | Min: 37.89% | Max: 62.11% | Vid: 49.99% Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.76% [1 Bito apvertimas (Bit-flip)]: Bitu skirtumas (%) | Min: 37.89% | Max: 62.11% | Vid: 49.99% Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.79%
+[1 Simbolio pakeitimas]: 
+Bitu skirtumas (%) | Min: 37.89% | Max: 62.11% | Vid: 49.99% 
+Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.76% 
+[1 Bito apvertimas (Bit-flip)]: 
+Bitu skirtumas (%) | Min: 37.89% | Max: 62.11% | Vid: 49.99% 
+Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.79%
 
 REZULTATAI ILGIUI: 500 baitu (25,000 poru)
-[1 Simbolio pakeitimas]: Bitu skirtumas (%) | Min: 37.89% | Max: 62.50% | Vid: 50.03% Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.77% [1 Bito apvertimas (Bit-flip)]: Bitu skirtumas (%) | Min: 36.72% | Max: 62.89% | Vid: 50.02% Hex skirtumas (%) | Min: 78.12% | Max: 100.00% | Vid: 93.74%
+[1 Simbolio pakeitimas]: 
+Bitu skirtumas (%) | Min: 37.89% | Max: 62.50% | Vid: 50.03% 
+Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.77% 
+[1 Bito apvertimas (Bit-flip)]: 
+Bitu skirtumas (%) | Min: 36.72% | Max: 62.89% | Vid: 50.02% 
+Hex skirtumas (%) | Min: 78.12% | Max: 100.00% | Vid: 93.74%
 
 REZULTATAI ILGIUI: 1000 baitu (25,000 poru)
-[1 Simbolio pakeitimas]: Bitu skirtumas (%) | Min: 36.72% | Max: 62.11% | Vid: 50.03% Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.77% [1 Bito apvertimas (Bit-flip)]: Bitu skirtumas (%) | Min: 37.50% | Max: 61.72% | Vid: 49.97% Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.72%
+[1 Simbolio pakeitimas]: 
+Bitu skirtumas (%) | Min: 36.72% | Max: 62.11% | Vid: 50.03% 
+Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.77% 
+[1 Bito apvertimas (Bit-flip)]: 
+Bitu skirtumas (%) | Min: 37.50% | Max: 61.72% | Vid: 49.97% 
+Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.72%
 
 ========================================================= BENDRI REZULTATAI (Iš viso 100,000 porų)
-[1 Simbolio pakeitimas]: Bitu skirtumas (%) | Min: 36.33% | Max: 62.89% | Vid: 50.01% Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.76%
 
-[1 Bito apvertimas (Bit-flip)]: Bitu skirtumas (%) | Min: 36.72% | Max: 63.28% | Vid: 49.99% Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.75%
+[1 Simbolio pakeitimas]: 
+Bitu skirtumas (%) | Min: 36.33% | Max: 62.89% | Vid: 50.01% 
+Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.76%
 
---- BITŲ SKIRTUMO (%) HISTOGRAMA --- 0% - 9% | (0) 10% - 19% | (0) 20% - 29% | (0) 30% - 39% | (36) 40% - 49% | ****************************************** (42522) 50% - 59% | ********************************************************* (57338) 60% - 69% | (104) 70% - 79% | (0) 80% - 89% | (0) 90% - 99% | (0)
+[1 Bito apvertimas (Bit-flip)]: 
+Bitu skirtumas (%) | Min: 36.72% | Max: 63.28% | Vid: 49.99% 
+Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.75%
 
-Įvesties ilgis neturi jokios pastebimos įtakos maišymo kokybei. Nesvarbu, ar tekstas trumpas (10 B), ar ilgas (1000 B), algoritmo difuzija išlieka tvari. Tai įrodo, kad algoritmo užpildymo (padding) bei blokinio maišymo ciklas veikia vienodai efektyviai per visą duomenų srautą.
-custom_hashas funkcija puikiai išlaiko lavinos efekto testą. Ji pasižymi stipria difuzija (angl. diffusion) ir pseudorandomiškumu — bet koks 1 bito ar 1 simbolio pokytis įvestyje sukelia atsitiktinį ir nepriklausomą ~50% išvesties bitų pasikeitimą.
+BITŲ SKIRTUMO (%) HISTOGRAMA 
+0% - 9% | (0) 
+10% - 19% | (0) 
+20% - 29% | (0) 
+30% - 39% | (36) 
+40% - 49% | ****************************************** (42522) 
+50% - 59% | ********************************************************* (57338) 
+60% - 69% | (104) 
+70% - 79% | (0) 
+80% - 89% | (0) 
+90% - 99% | (0)
+
+Įvesties ilgis neturi jokios pastebimos įtakos maišymo kokybei. Nesvarbu, ar tekstas trumpas (10 B), ar ilgas (1000 B), algoritmo difuzija išlieka tvari. Tai įrodo, kad algoritmo užpildymo (padding) bei blokinio maišymo ciklas veikia vienodai efektyviai per visą duomenų srautą. custom_hashas funkcija puikiai išlaiko lavinos efekto testą. Ji pasižymi stipria difuzija (angl. diffusion) ir pseudorandomiškumu — bet koks 1 bito ar 1 simbolio pokytis įvestyje sukelia atsitiktinį ir nepriklausomą ~50% išvesties bitų pasikeitimą.
 
 7 eksperimentas
+
 ======================================================== PERRINKIMO (BRUTE-FORCE) ATAKOS EKSPERIMENTAS
-[1] PERRINKIMAS BE DRUSKOS Ieskoma hash reiksme: c869f12ca528ff1fda73caea54ceb32fbdfd980870697b6c192088209aa38a45 -> Rastas sutapimas: 7392 -> Atlikta bandymu: 7393 -> Uztruko laiko: 3 ms
 
-[2] PERRINKIMAS SU VIESA DRUSKA Generuojama druska (Hex): 5fcbf32ebbc79998277227190e75dd55 Ieskoma hash reiksme: 7c3c620362b161a768a2788dec01d08fb940b8379ec113f6746115492ef83eec -> Rastas sutapimas: 7392 -> Atlikta bandymu: 7393 -> Uztruko laiko: 3 ms
+[1] PERRINKIMAS BE DRUSKOS 
+Ieskoma hash reiksme: c869f12ca528ff1fda73caea54ceb32fbdfd980870697b6c192088209aa38a45 
+-> Rastas sutapimas: 7392 
+-> Atlikta bandymu: 7393 
+-> Uztruko laiko: 3 ms
 
-Eksperimentas įrodo, kad naudojant greitas maišos funkcijas, mažos įvesčių erdvės (pvz., 4 skaitmenų PIN) perrinkimas įvyksta per kelias milisekundes, o rastas sutapimas vienareikšmiškai identifikuoja pradinę įvestį. Viešos druskos pridėjimas nepailgina pavienio taikinio nulaužimo laiko, tačiau sėkmingai neutralizuoja masines atakas, pagrįstas iš anksto apskaičiuotų rezultatų lentelėmis (angl. rainbow tables). Norint realiai apsaugoti trumpas paslaptis nuo perrinkimo, būtina naudoti didelę slaptą atsitiktinę reikšmę (kaip įsipareigojimo schemose) arba specializuotas, skaičiavimo resursams imlias slaptažodžių maišos funkcijas, tokias kaip „Argon2id“
+[2] PERRINKIMAS SU VIESA DRUSKA 
+Generuojama druska (Hex): 5fcbf32ebbc79998277227190e75dd55 
+Ieskoma hash reiksme: 7c3c620362b161a768a2788dec01d08fb940b8379ec113f6746115492ef83eec 
+-> Rastas sutapimas: 7392 
+-> Atlikta bandymu: 7393 
+-> Uztruko laiko: 3 ms
 
-
+Eksperimentas įrodo, kad naudojant greitas maišos funkcijas, mažos įvesčių erdvės (pvz., 4 skaitmenų PIN) perrinkimas įvyksta per kelias milisekundes, o rastas sutapimas vienareikšmiškai identifikuoja pradinę įvestį. Viešos druskos pridėjimas nepailgina pavienio taikinio nulaužimo laiko, tačiau sėkmingai neutralizuoja masines atakas, pagrįstas iš anksto apskaičiuotų rezultatų lentelėmis (angl. rainbow tables). Norint realiai apsaugoti trumpas paslaptis nuo perrinkimo, būtina naudoti didelę slaptą atsitiktinę reikšmę (kaip įsipareigojimo schemose) arba specializuotas, skaičiavimo resursams imlias slaptažodžių maišos funkcijas, tokias kaip „Argon2id“.
