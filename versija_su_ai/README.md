@@ -110,7 +110,73 @@ Gauta maisa (Hash): 9bb58288b8cfe7abd0bab28b374317ffd365a2fffc864f693ff3b15b5783
 Iveskite pasirinkima: 0
 Programa baigia darba.
 
-Iš eksperimento rezultatų matosi, kad A,B,A principas veikia teisingai, ir pirma įvestis nuo trečios nesiskiria.
+Iš eksperimento rezultatų matosi, kad A,B,A determinizmo testas veikia teisingai, ir pirma įvestis nuo trečios nesiskiria.
 
 4 eksperimentas
+5 eksperimentas
+======================================================== KOLIZIJU EKSPERIMENTAS (custom_hashas)
+Abecele: ASCII spausdinami simboliai [32..126] Generatoriaus pradine reiksme (Seed): 2026 Poru skaicius kiekvienam ilgiui: 100000
+Tikrinamas ilgis: 10 baitu
+Porose rastu koliziju skaicius: 0 / 100000
+Skirtingu sugeneruotu ivesciu skaicius: 200000
+Skirtingu ivesciu grupiu (unikaliu hash): 200000
+Viso rinkinio koliziju skaicius: 0
+Tikrinamas ilgis: 100 baitu
+Porose rastu koliziju skaicius: 0 / 100000
+Skirtingu sugeneruotu ivesciu skaicius: 200000
+Skirtingu ivesciu grupiu (unikaliu hash): 200000
+Viso rinkinio koliziju skaicius: 0
+Tikrinamas ilgis: 500 baitu
+Porose rastu koliziju skaicius: 0 / 100000
+Skirtingu sugeneruotu ivesciu skaicius: 200000
+Skirtingu ivesciu grupiu (unikaliu hash): 200000
+Viso rinkinio koliziju skaicius: 0
+Tikrinamas ilgis: 1000 baitu
+Porose rastu koliziju skaicius: 0 / 100000
+Skirtingu sugeneruotu ivesciu skaicius: 200000
+Skirtingu ivesciu grupiu (unikaliu hash): 200000
+Viso rinkinio koliziju skaicius: 0
+======================================================== STRUKTŪRUOTŲ ĮVESČIŲ TIKRINIMAS
+Tekstas: ABCDEFGHIJKLMNOP | Hash: e4fe39fdd09b9639b181d58800a4704c1129ea622d7d1a15ef287c0d478f2c49 Tekstas: BACDEFGHIJKLMNOP | Hash: 8eb7b60894008ee8c6e35eac7edcab3716009d8d7eec7799c73d44c9ba4a55fb Tekstas: PONMLKJIHGFEDCBA | Hash: 9518ab29eb58239f0293b65f277d499cc3ceff6ea0c252e8c9806896405ac142 Tekstas: AAAAAAAAAAAAAAAA | Hash: 3327633bfdff4feb885fa134728a968111ed5c62c75f463b961a944877eca1c7 Tekstas: ABABABABABABABAB | Hash: 489ce59eb199ad45c418b16068e865515eeef4f76d54655881ccffb7f5d0b20e Tekstas: 0000000000000000 | Hash: 1a1d85ae77d7cbc79ed7df185fc88084f6090272aca5b7283f61374d21b54efc Tekstas: 1111111111111111 | Hash: bfb7f7c32c05d97edc961dcc2cdab2e1ae3ddf2e80c4a43d7c96b773c6baae0d Tekstas: 0000000000000001 | Hash: 56951a1c1d341d2251cc4c7bef96dcc26fe689c5a72aa8fa989ee3aad39e93ed Tekstas: 0000000000000002 | Hash: 499bb28c06618837ebab231a37ad71b94d067123e092e0df8b25e64f866dc17b
+
+Strukturiniu koliziju rasta: 0
+
+custom_hashas algoritmo išvestis susideda iš 4 \text{uint64\_t} būsenos kintamųjų, todėl bendras maišos ilgis yra 256 bitai (n = 256). Idealios 256 bitų maišos funkcijos atveju:Vienos nesusijusių įvesčių poros kolizijos tikimybė:P_{\text{poros}} = 2^{-n} = 2^{-256} \approx 8.63 \times 10^{-78}Ši tikimybė yra praktiškai lygi nuliui, todėl 100 000 porų bandyme rasti koliziją atsitiktinai neįmanoma.
+
+Empirinis 200\,000 eilučių patikrinimas apima tik nykstamai mažą įvesčių erdvės dalį. Kolizijų neradimas atsitiktiniu būdu įrodo tik tai, kad maišos funkcija neturi visiškai trivialių klaidų (pvz., kad visiems įvesties variantams negrąžina tos pačios reikšmės).
+
+6 eksperimentas
+========================================================= LAVINOS EFEKTO (AVALANCHE) TESTAS
+Generuojama 100,000 poru (po 25,000 pagal 4 ilgius) Abecele: ASCII [32..126], Seed: 2026 Orientaciniai vidurkiai: Bitams ~50.0%, Hex ~93.75%
+
+REZULTATAI ILGIUI: 10 baitu (25,000 poru)
+[1 Simbolio pakeitimas]: Bitu skirtumas (%) | Min: 36.33% | Max: 62.89% | Vid: 49.99% Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.73% [1 Bito apvertimas (Bit-flip)]: Bitu skirtumas (%) | Min: 37.89% | Max: 63.28% | Vid: 49.98% Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.76%
+
+REZULTATAI ILGIUI: 100 baitu (25,000 poru)
+[1 Simbolio pakeitimas]: Bitu skirtumas (%) | Min: 37.89% | Max: 62.11% | Vid: 49.99% Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.76% [1 Bito apvertimas (Bit-flip)]: Bitu skirtumas (%) | Min: 37.89% | Max: 62.11% | Vid: 49.99% Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.79%
+
+REZULTATAI ILGIUI: 500 baitu (25,000 poru)
+[1 Simbolio pakeitimas]: Bitu skirtumas (%) | Min: 37.89% | Max: 62.50% | Vid: 50.03% Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.77% [1 Bito apvertimas (Bit-flip)]: Bitu skirtumas (%) | Min: 36.72% | Max: 62.89% | Vid: 50.02% Hex skirtumas (%) | Min: 78.12% | Max: 100.00% | Vid: 93.74%
+
+REZULTATAI ILGIUI: 1000 baitu (25,000 poru)
+[1 Simbolio pakeitimas]: Bitu skirtumas (%) | Min: 36.72% | Max: 62.11% | Vid: 50.03% Hex skirtumas (%) | Min: 79.69% | Max: 100.00% | Vid: 93.77% [1 Bito apvertimas (Bit-flip)]: Bitu skirtumas (%) | Min: 37.50% | Max: 61.72% | Vid: 49.97% Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.72%
+
+========================================================= BENDRI REZULTATAI (Iš viso 100,000 porų)
+[1 Simbolio pakeitimas]: Bitu skirtumas (%) | Min: 36.33% | Max: 62.89% | Vid: 50.01% Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.76%
+
+[1 Bito apvertimas (Bit-flip)]: Bitu skirtumas (%) | Min: 36.72% | Max: 63.28% | Vid: 49.99% Hex skirtumas (%) | Min: 76.56% | Max: 100.00% | Vid: 93.75%
+
+--- BITŲ SKIRTUMO (%) HISTOGRAMA --- 0% - 9% | (0) 10% - 19% | (0) 20% - 29% | (0) 30% - 39% | (36) 40% - 49% | ****************************************** (42522) 50% - 59% | ********************************************************* (57338) 60% - 69% | (104) 70% - 79% | (0) 80% - 89% | (0) 90% - 99% | (0)
+
+Įvesties ilgis neturi jokios pastebimos įtakos maišymo kokybei. Nesvarbu, ar tekstas trumpas (10 B), ar ilgas (1000 B), algoritmo difuzija išlieka tvari. Tai įrodo, kad algoritmo užpildymo (padding) bei blokinio maišymo ciklas veikia vienodai efektyviai per visą duomenų srautą.
+custom_hashas funkcija puikiai išlaiko lavinos efekto testą. Ji pasižymi stipria difuzija (angl. diffusion) ir pseudorandomiškumu — bet koks 1 bito ar 1 simbolio pokytis įvestyje sukelia atsitiktinį ir nepriklausomą ~50% išvesties bitų pasikeitimą.
+
+7 eksperimentas
+======================================================== PERRINKIMO (BRUTE-FORCE) ATAKOS EKSPERIMENTAS
+[1] PERRINKIMAS BE DRUSKOS Ieskoma hash reiksme: c869f12ca528ff1fda73caea54ceb32fbdfd980870697b6c192088209aa38a45 -> Rastas sutapimas: 7392 -> Atlikta bandymu: 7393 -> Uztruko laiko: 3 ms
+
+[2] PERRINKIMAS SU VIESA DRUSKA Generuojama druska (Hex): 5fcbf32ebbc79998277227190e75dd55 Ieskoma hash reiksme: 7c3c620362b161a768a2788dec01d08fb940b8379ec113f6746115492ef83eec -> Rastas sutapimas: 7392 -> Atlikta bandymu: 7393 -> Uztruko laiko: 3 ms
+
+Eksperimentas įrodo, kad naudojant greitas maišos funkcijas, mažos įvesčių erdvės (pvz., 4 skaitmenų PIN) perrinkimas įvyksta per kelias milisekundes, o rastas sutapimas vienareikšmiškai identifikuoja pradinę įvestį. Viešos druskos pridėjimas nepailgina pavienio taikinio nulaužimo laiko, tačiau sėkmingai neutralizuoja masines atakas, pagrįstas iš anksto apskaičiuotų rezultatų lentelėmis (angl. rainbow tables). Norint realiai apsaugoti trumpas paslaptis nuo perrinkimo, būtina naudoti didelę slaptą atsitiktinę reikšmę (kaip įsipareigojimo schemose) arba specializuotas, skaičiavimo resursams imlias slaptažodžių maišos funkcijas, tokias kaip „Argon2id“
+
 
