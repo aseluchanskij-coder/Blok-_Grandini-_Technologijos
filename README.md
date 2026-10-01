@@ -358,14 +358,12 @@ Visuose testuose naudojamas tas pats algoritmas (funkcijos `padding`, `bigEndian
 
 #### Silpnybės
 
-| Silpnybė | Svarba | Įrodymas |
+| # | Silpnybė | Svarba | Įrodymas |
 |---:|---|---|---|
 | 1 | Konstrukcija apverčiama (nėra „feed-forward“), o maiša yra visa vidinė būsena | **Kritinė** | demo 1–3 |
 | 2 | Raundo funkcija „vienakryptė“: bitas `j` priklauso tik nuo bitų `≤ j`, todėl aukštieji bitai beveik nesklinda | **Didelė** | demo 4–5, 6 eksperimentas |
 | 3 | Trumpų pranešimų maišose yra pastovių baitų | Vidutinė | demo 6 |
 | 4 | Beveik tiesinė (XOR) struktūra, ypač 6–7 žodžiuose | Vidutinė (algebrinė analizė) | formulės žemiau |
-
-
 
 # Šaltiniai
 - https://dev.to/alen_pythonista_bb/binary-file-handling-in-c-a-beginners-guide-148o
