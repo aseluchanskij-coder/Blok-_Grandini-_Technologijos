@@ -198,6 +198,174 @@ Palyginimas su maišos funkcija
 - **Visas perrinkimas užtrunka ~20–25 ms** (10 000 × ~2,5 µs), t. y. maža kandidatų erdvė (4 skaitmenys) visiškai neatspari brute force atakai, nepriklausomai nuo maišos funkcijos.
 - **Druska turi prasmę kitose situacijose:** prieš iš anksto paskaičiuotas lenteles (rainbow tables) ir kad vienodi slaptažodžiai turėtų skirtingas maišas. Jai nereikia būti slaptai, bet ji negali kompensuoti per mažos slaptažodžio erdvės.
 
+### Eksperimentas 8
+#### Kompiliavimas
+Kompiliavimui naudokite šią komandą (įsitikinkite, kad turite g++ kompiliatorių):
+```
+g++ -O3 main.cpp -o programa
+```
+
+#### Paleidimas
+1. Nusiklonuokite repozitoriją:
+```
+git clone https://github.com/aseluchanskij-coder/Blok-_Grandini-_Technologijos/tree/v0.1
+```
+2. Pasitikrinkite ar esate tinkamame aplanke:
+```
+cd ~/Blok-_Grandini_-Technologijos/versija_be_ai
+```
+3. Sukompiliukite programą (komandą rasite viršuje)
+4. Paleiskite programą:
+- Windows aplinkoje (cmd):
+```
+programa
+```
+- Windows aplinkoje (powershell):
+```
+.\programa
+```
+- MacOS/Linux aplinkoje:
+```
+./programa
+```
+
+#### Pseudokodas
+```
+CONSTANTS
+    BLOCK_SIZE  = 32 bytes            // 8 words x 4 bytes
+    ROUNDS      = 16
+    SHIFTS      = [7, 11, 13, 17, 19, 23, 29, 31]
+
+FUNCTION ReadFile(filename) -> bytes
+    open filename in binary mode
+    IF open fails THEN
+        ERROR "Failed to open file"
+    data <- empty byte list
+    WHILE file still has data
+        chunk <- read up to 32 bytes
+        append the bytes that were actually read to data
+    RETURN data
+
+FUNCTION ReadInput() -> bytes
+    PRINT "Enter text: "
+    input <- read one line from keyboard
+    IF input is empty THEN
+        ERROR "Text cannot be empty"
+    RETURN input converted to bytes
+
+FUNCTION AppendLengthBigEndian(lengthInBits, data)
+    // add the 64-bit number as 8 bytes, most significant byte first
+    FOR i FROM 7 DOWN TO 0
+        byte <- (lengthInBits shifted right by i*8 bits) AND 0xFF
+        append byte to data
+
+FUNCTION Pad(data)
+    lengthInBits <- (number of bytes in data) * 8
+    append 0x80 to data                      // "end of message" marker
+    WHILE (size of data) MOD 32 != 24
+        append 0x00 to data                  // fill with zeros
+    AppendLengthBigEndian(lengthInBits, data) // last 8 bytes = original length
+    // result: size of data is now a multiple of 32
+
+FUNCTION BlockToWords(data, startIndex) -> 8 words
+    FOR j FROM 0 TO 7
+        index <- startIndex + j*4
+        words[j] <- combine data[index..index+3] into one 32-bit number,
+                    first byte being the most significant (big-endian)
+    RETURN words
+
+FUNCTION Avalanche(state)                    // "lavina" = churn the mixture
+    // Step 1: chain the words together with XOR
+    state[0] <- state[0] XOR state[7]
+    FOR i FROM 1 TO 7
+        state[i] <- state[i] XOR state[i-1]
+
+    // Step 2: stretch each word by shifting and adding
+    FOR i FROM 0 TO 7
+        state[i] <- state[i] + (state[i] shifted left by SHIFTS[i])
+                    // everything is 32-bit, so overflow wraps around
+
+MAIN
+    state <- 8 fixed seed numbers
+             [0x12345678, 0x8abcd123, 0xabcabcab, 0x87654321,
+              0xdefdefff, 0xaabbccdd, 0x11223344, 0xfedbc111]
+
+    PRINT "Choose 1 - read from file, 2 - type text: "
+    choice <- read line
+
+    IF choice = "1" THEN
+        filename <- ask user for the file name
+        TRY
+            text <- ReadFile(filename)
+        ON ERROR
+            PRINT the error message
+            EXIT with failure
+    ELSE IF choice = "2" THEN
+        text <- ReadInput()
+    ELSE
+        PRINT "Invalid choice"
+        EXIT with failure
+
+    Pad(text)
+
+    FOR each block of 32 bytes in text
+        words <- BlockToWords(text, blockStart)
+        FOR j FROM 0 TO 7
+            state[j] <- state[j] XOR words[j]      // mix the block in
+        REPEAT 16 times
+            Avalanche(state)                       // churn
+
+    result <- empty string
+    FOR each word in state
+        append word as exactly 8 hex digits (pad with leading zeros)
+    PRINT "Final hash: " + result
+```
+#### Maišos algoritmo parametrai
+Visuose testuose naudojamas tas pats algoritmas (funkcijos `padding`, `bigEndian`, `vertimasZodziais`, `lavina` yra identiškos visuose failuose).
+ 
+| Parametras | Reikšmė |
+|---|---|
+| Išvesties dydis | 256 bitai (8 × 32 bitų žodžiai) = 64 hex simboliai |
+| Bloko dydis | 32 baitai (8 žodžiai po 4 baitus, big-endian) |
+| Pradinė būsena (seed) | `0x12345678, 0x8abcd123, 0xabcabcab, 0x87654321, 0xdefdefff, 0xaabbccdd, 0x11223344, 0xfedbc111` |
+| Užpildymas (padding) | pridedamas baitas `0x80`, tada `0x00` iki ilgio `mod 32 = 24`, tada 8 baitų pradinio ilgio **bitais** (big-endian) |
+| Bloko maišymas | `state[j] ^= žodis[j]`, po to `lavina` kviečiama **16 kartų** |
+| `lavina` žingsniai | 1) `state[0] ^= state[7]`, `state[i] ^= state[i-1]` (i = 1..7); 2) `state[i] += state[i] << p[i]` |
+| Postūmių konstantos `p` | `7, 11, 13, 17, 19, 23, 29, 31` |
+| Aritmetika | `uint32_t`, perpildymas (wrap-around) yra sąmoningas |
+| Išvesties formatas | kiekvienas žodis kaip 8 hex simboliai, mažosios raidės, pridedami pradiniai nuliai |
+ #### Testų aplinka
+ - **Kalba:** C++ (rekomenduojama C++17).
+- **Kompiliatorius:** GCC arba Clang. `test_6.cpp` naudoja `__builtin_popcount`, kuris **neveikia MSVC**.
+
+- **Kodavimas:** šaltinio failai ir įvesties failai turi būti **UTF-8** (`test1.cpp` spausdina lietuviškus simbolius, `test_5.cpp` turi bengalų raštą eilutėje).
+- **Laiko matavimai** (`test4`, `test_7`) priklauso nuo kompiuterio, procesoriaus ir optimizavimo lygio, todėl rezultatus reikia lyginti tik toje pačioje aplinkoje.
+
+#### Reikalingi testiniai failai testams
+| Failas | Turinys |
+|---|---|
+| `failas1.txt` | vienas simbolis `a` (tiksliai 1 baitas) |
+| `failas2.txt` | vienas simbolis `b` (tiksliai 1 baitas) |
+| `failas3.txt` | ASCII tekstas, ilgesnis nei 1000 baitų |
+| `failas3_cp.txt` | `failas3.txt` kopija, kurioje pakeistas **vienas** baitas |
+| `failas4.txt` | kitas ASCII tekstas, > 1000 baitų |
+| `failas4_cp.txt` | `failas4.txt` kopija su vienu pakeistu baitu |
+| `failas5.txt` | dar kitas ASCII tekstas, > 1000 baitų |
+| `failas5_cp.txt` | `failas5.txt` kopija su vienu pakeistu baitu |
+| `strukt_failas1.txt` | pasikartojanti raidė (`AAA...AAA`) |
+| `strukt_failas2.txt` | struktūruotas tekstas su naujos eilutės simboliu (`ABC` / `abc`) |
+| `ne_ascii.txt` | tekstas su ne ASCII simboliais (pvz., lietuviškos raidės) |
+
+#### Silpnybės
+
+ # | Silpnybė | Svarba | Įrodymas |
+|---:|---|---|---|
+| 1 | Konstrukcija apverčiama (nėra „feed-forward“), o maiša yra visa vidinė būsena | **Kritinė** | demo 1–3 |
+| 2 | Raundo funkcija „vienakryptė“: bitas `j` priklauso tik nuo bitų `≤ j`, todėl aukštieji bitai beveik nesklinda | **Didelė** | demo 4–5, 6 eksperimentas |
+| 3 | Trumpų pranešimų maišose yra pastovių baitų | Vidutinė | demo 6 |
+| 4 | Beveik tiesinė (XOR) struktūra, ypač 6–7 žodžiuose | Vidutinė (algebrinė analizė) | formulės žemiau |
+
+
 
 # Šaltiniai
 - https://dev.to/alen_pythonista_bb/binary-file-handling-in-c-a-beginners-guide-148o
@@ -568,20 +736,20 @@ Ieskoma hash reiksme: 7c3c620362b161a768a2788dec01d08fb940b8379ec113f6746115492e
     Praktikoje tokioje mažoje aibėje (10 000 kandidatų) rastas sutapimas vienareikšmiškai identifikuoja pradinę įvestį, nes kolizijų tikimybė su gera maišos funkcija yra artima nuliui. Teoriškai, jei įvyktų kolizija (du skirtingi PIN duotų tą patį hash'ą), vienareikšmio atpažinimo nebūtų. Kai skaičiuojama H(input || r), o r (slaptas atsitiktinumas) iš pradžių yra nežinomas, paieškos erdvė drastiškai pasikeičia. Paieškos erdvė: Ji išauga nuo 10 000 iki 10000x2^r. Jei r yra pakankamai ilgas (pvz., 256 bitų), viso didelės erdvės perrinkimo atlikti praktiškai neįmanoma. Patikrinimas atskleidus r: kai autorius vėliau paviešina ir input, ir r, bet kas gali apskaičiuoti maišą ir patikrinti, ar ji sutampa su anksčiau paskelbta. Tai įrodo, kad autorius iš anksto žinojo pranešimą ir jo vėliau nepakeitė, bet iki atskleidimo niekas negalėjo jo perskaityti.
 
 
-    8 eksperimentas
+8 eksperimentas
 
-    Šis skyrius apibendrina visų eksperimentų rezultatus, remiantis paskaitų medžiaga.
+* Šis skyrius apibendrina visų eksperimentų rezultatus, remiantis paskaitų medžiaga.
 
-Lavinos efektas (Avalanche Effect): Eksperimentai (6 ekspr.) įrodė, kad algoritmas pasižymi stipriu lavinos efektu. Net vieno bito ar simbolio pakeitimas įvestyje vidutiniškai pakeičia ~50% išvesties bitų. Tai rodo gerą difuziją, atitinkančią patikimų maišos reikšmių reikalavimus.
+- Lavinos efektas (Avalanche Effect): Eksperimentai (6 ekspr.) įrodė, kad algoritmas pasižymi stipriu lavinos efektu. Net vieno bito ar simbolio pakeitimas įvestyje vidutiniškai pakeičia ~50% išvesties bitų. Tai rodo gerą difuziją, atitinkančią patikimų maišos reikšmių reikalavimus.
 
-Kolizijos (Collisions): Generuojant 200,000 atsitiktinių porų ir testuojant skirtingus ilgius (5 ekspr.), kolizijų nebuvo aptikta. Tai parodo, kad algoritmas neturi trivialių struktūrinių klaidų.
+- Kolizijos (Collisions): Generuojant 200,000 atsitiktinių porų ir testuojant skirtingus ilgius (5 ekspr.), kolizijų nebuvo aptikta. Tai parodo, kad algoritmas neturi trivialių struktūrinių klaidų.
 
-Pirmavaizdžiai (Preimages): Pirmavaizdžio radimas remiasi funkcijų negrįžtamumu. Kaip parodė 7 eksperimentas, trumpiems tekstams (pvz., PIN kodams) rasti pirmavaizdį (įvestį iš turimos maišos) trunka vos kelias milisekundes dėl greito algoritmo veikimo ir mažos paieškos aibės. Taikant druską (angl. salt), masinis pirmavaizdžių paieškos vektorius (pvz., per rainbow tables) yra efektyviai neutralizuojamas.
+- Pirmavaizdžiai (Preimages): Pirmavaizdžio radimas remiasi funkcijų negrįžtamumu. Kaip parodė 7 eksperimentas, trumpiems tekstams (pvz., PIN kodams) rasti pirmavaizdį (įvestį iš turimos maišos) trunka vos kelias milisekundes dėl greito algoritmo veikimo ir mažos paieškos aibės. Taikant druską (angl. salt), masinis pirmavaizdžių paieškos vektorius (pvz., per rainbow tables) yra efektyviai neutralizuojamas.
 
-Patikimos maišos reikšmės: Gautos maišos yra patikimos kasdieniam duomenų vientisumo tikrinimui (pvz., failų modifikacijoms sekti), nes atkuriami testai (3 ekspr. determinizmo testas) rodo stabilų veikimą.
+- Patikimos maišos reikšmės: Gautos maišos yra patikimos kasdieniam duomenų vientisumo tikrinimui (pvz., failų modifikacijoms sekti), nes atkuriami testai (3 ekspr. determinizmo testas) rodo stabilų veikimą.
 
-Teiginiai, kurių eksperimentai negali pagrįsti:
-Nors kolizijų ieškiklis (5 ekspr.) jų nerado, negalima pagrįsti teiginio, kad funkcija yra visiškai atspari kolizijoms. Mūsų testuota 200,000 įvesčių aibė yra nykstamai maža lyginant su teorine $2^{256}$ erdve. Taip pat, nors lavinos efektas puikus, tai neįrodo algoritmo kriptografinio saugumo – algoritmas gali būti pažeidžiamas atvirkštinei inžinerijai, kurios šie empiriniai testai neapima.
+- Teiginiai, kurių eksperimentai negali pagrįsti:
+  Nors kolizijų ieškiklis (5 ekspr.) jų nerado, negalima pagrįsti teiginio, kad funkcija yra visiškai atspari kolizijoms. Mūsų testuota 200,000 įvesčių aibė yra nykstamai maža lyginant su teorine $2^{256}$ erdve. Taip pat, nors lavinos efektas puikus, tai neįrodo algoritmo kriptografinio saugumo – algoritmas gali būti pažeidžiamas atvirkštinei inžinerijai, kurios šie empiriniai testai neapima.
 
 # Šaltiniai
 
