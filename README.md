@@ -357,7 +357,7 @@ Visuose testuose naudojamas tas pats algoritmas (funkcijos `padding`, `bigEndian
 | `ne_ascii.txt` | tekstas su ne ASCII simboliais (pvz., lietuviškos raidės) |
 
 #### Silpnybės
-
+* Šias silpnybes atrasti paprašiau Claude pagalbos
 | # | Silpnybė | Svarba | Įrodymas |
 |---:|---|---|---|
 | 1 | Konstrukcija apverčiama (nėra „feed-forward“), o maiša yra visa vidinė būsena | **Kritinė** | demo 1–3 |
