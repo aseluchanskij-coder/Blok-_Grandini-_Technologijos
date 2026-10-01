@@ -1,8 +1,8 @@
 # Blokų grandinių technologijos: Maišos funkcijos (Hash) realizacija
 
 ## Autorių indėlis
-*   **[Matas Marčiulionis]:** Kūrė Hash funkciją savarankiškai, nenaudojant dirbtinio intelekto pagalbos (`versija_be_ai`). Atliko pirminius tyrimus, algoritmo testavimą, 1–8 eksperimentus ir parengė savo dalies dokumentaciją.
-*   **[Tavo Vardas Pavardė]:** Kūrė Hash funkciją su DI pagalba kodo aprašymui, struktūravimui, dalies metodų realizavimui, naudojant savo idėjas(`versija_su_ai`). Sukūrė atskirą 32 baitų bloko maišymo algoritmą, atliko 1–8 eksperimentus ir parengė dokumentaciją.
+*   **Matas Marčiulionis:** Kūrė Hash funkciją savarankiškai, nenaudojant dirbtinio intelekto pagalbos (`versija_be_ai`). Atliko pirminius tyrimus, algoritmo testavimą, 1–8 eksperimentus ir parengė savo dalies dokumentaciją.
+*   **Alan Šeluchanskij:** Kūrė Hash funkciją su DI pagalba kodo aprašymui, struktūravimui, dalies metodų realizavimui, naudojant savo idėjas(`versija_su_ai`). Sukūrė atskirą 32 baitų bloko maišymo algoritmą, atliko 1–8 eksperimentus ir parengė dokumentaciją.
 *   **Bendras darbas:** Kartu atliktas realizacijų palyginimas ir suformuluotos 8-ojo eksperimento galutinės išvados.
 
 ---
