@@ -91,6 +91,13 @@ Programos paleidimas iš naujo
 
 
 ### Eksperimentas 4
+- Įvesties failas: `konstitucija.txt` (789 eilutės, 75 595 baitai)
+- Matuojami dydžiai: pirmos `n` eilutės, `n = 1, 2, 4, …, 512`, ir visas failas (789)
+- Kiekvienai eilutei pridėtas `\n`
+- Prieš kiekvieną `n`: 5 apšilimo maišos skaičiavimai
+- Kiekvienam `n`: 5 matavimai po 1000 iteracijų
+- Laikas: ms vienai maišai (bendras laikas / 1000), `std::chrono::high_resolution_clock`
+
 Failas nuskaitytas. Viso eilučių: 789
 
 | Eilutės | Baitai | Min (ms) | Max (ms) | Vidurkis (ms) | Vidurkis (ns / baitą) |
@@ -106,6 +113,8 @@ Failas nuskaitytas. Viso eilučių: 789
 | 256 | 20409 | 0.0343394 | 0.035833 | 0.0350514 | 1.72 |
 | 512 | 47434 | 0.0863487 | 0.113639 | 0.0956014 | 2.02 |
 | 789 (visas failas) | 75595 | 0.133922 | 0.146361 | 0.137835 | 1.82 |
+
+![bar chart](image-1.png)
 
 - **Laikas auga maždaug tiesiškai** nuo baitų skaičiaus: nuo ~1 000 baitų apie 1,7–2,0 ns vienam baitui (kai įvestis dvigubėja, laikas ~dvigubėja).
 
