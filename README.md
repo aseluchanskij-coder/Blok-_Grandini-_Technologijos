@@ -772,3 +772,53 @@ Išanalizavę abu algoritmus (kurtus savarankiškai ir su DI pagalba), padarėme
 *   **Lavinos efektas (Difuzija):** Tai esminis skirtumas tarp dviejų algoritmų. Versija, kurta su DI pagalba, demonstruoja stiprų ir beveik idealų ~50 % bitų pasikeitimą, užtikrindama patikimą difuziją. Tuo tarpu versija be DI rodo silpnesnį lavinos efektą – vidutiniškai pasikeičia tik ~27 % bitų, kas rodo mažesnį pradinį išsisklaidymą.
 *   **Atsparumas kolizijoms:** Generuojant po 200,000 aibių, nei viena funkcija nesugeneravo kolizijų – abi išlaiko minimalius trivialių klaidų neturėjimo standartus. Tačiau tai neįrodo kriptografinio saugumo.
 *   **Pirmavaizdžių perrinkimas:** Abi realizacijos labai greitos apskaičiuojant mažų duomenų kiekių maišas, todėl paieškos erdvėms (pvz. PIN kodams) atlikti *brute-force* atakas trunka vos kelias milisekundes. Vieša druska nei vienos versijos veikimo laiko reikšmingai neprailgino, patvirtinant teoriją, kad vieša druska skirta apsaugai nuo masinių (*rainbow tables*), o ne tiesioginių perrinkimo atakų.
+
+## 4 DALIS: PAPILDOMA UŽDUOTIS - ALGORITMŲ LYGINIMAS
+
+Šioje dalyje mes palyginome savo maišos algoritmą su kolegų maišos algoritmais iš kitų grupių. Pasitarę, mes nusprendėme tikrinti 4-ąjį, 5-ąjį ir 6-ąjį eksperimentus.
+Mes padareme toki pasirinkimą kadangi įdėję kitus algoritmus mes patikrintume tik ar maišos funkcijos teisingai atlieka savo darbą (1-4 eksp.). 7 eksperimento mes irgi nedarėme, nes teisingai veikiančiame algoritme vieša druska irgi neturėtų daryti įtakos skaičiamų greičiui. 8 eksperimentas yra išvadų formulavimas.
+
+Pasirinktų kusiokų vardai ir github nuorodos surašytos lentelėje:
+
+| Vardas, pavardė   | Vardas, pavardė     | Github nuoroda                                  |
+|-------------------|---------------------|-------------------------------------------------|
+| Rokas Smetonis    | Joringis Penkauskas | https://github.com/Mizerd/BGT_1                 |
+| Almantas Činčikas | -                   | https://github.com/AlmantasC/BlockchainHash     |
+| Arnas Žemaitis    | -                   | https://github.com/ainis997/Maisos-generatorius |
+
+Rezultatai:
+Palygine mūsų ir kursiokų sukurtus darbus mes juos paskirstėme į kategorijas pagal eksperimento numerį ir parašėme kokią vietą vidutiniškai užėmė mūsų ir kursiokų algoritmai.
+
+## Algoritmų palyginimo rezultatai
+
+Atlikus visų keturių algoritmų (Mano, Arno, Almanto ir Joringio) testavimą vienodomis sąlygomis, gauti šie rezultatai:
+
+| Algoritmas | 4. Sparta (MB/s) | 10 MB failo apdorojimo laikas | 5. Kolizijos (iš 100 000) | 6. Lavinos efektas (%) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Almantas** | **2170.47** | 0.0046 s | 0 | 54.69 % |
+| **Joringis** | 334.35 | 0.0299 s | 0 | 51.56 % |
+| **Arnas** | 85.80 | 0.1165 s | 0 | **50.00 %** |
+| **Mato Algoritmas**| 307.69 | 0.0325 s | 0 | 16.02 % |
+
+### Rezultatų analizė ir apibendrinimas:
+
+1. **Sparta ir našumas (4 eksperimentas):**
+   * **Almantas** pademonstravo išskirtinį, triuškinantį greitį – jo algoritmas pasiekė net **2170 MB/s** pralaidumą (10 MB apdoroja vos per 4 milisekundes).
+   * **Joringio** (334 MB/s) ir **Mano algoritmo** (307 MB/s) realizacijos dalijasi antrą ir trečią vietas. Jie yra pakankamai greiti standartiniams failams apdoroti.
+   * **Arno** algoritmas, nors ir turintis geriausią lavinos efektą, yra lėčiausias (85 MB/s), nes naudoja sudėtingesnes matematines operacijas bei rotacijas, kurios reikalauja daugiau procesoriaus ciklų.
+
+2. **Kolizijų atsparumas (5 eksperimentas):**
+   Visi keturi algoritmai pasirodė nepriekaištingai – sugeneravus 100 000 atsitiktinių ir struktūruotų eilučių, nė vienas algoritmas nerado kolizijų. Tai rodo, kad visų algoritmų 256 bitų erdvė yra pakankamai didelė, o pradinė sklaida veikia teisingai.
+
+3. **Lavinos efektas (6 eksperimentas):**
+   Ideali kriptografinė maišos funkcija pakeitus vieną įvesties bitą turėtų pakeisti lygiai pusę (50 %) išvesties bitų.
+   * **Arno** algoritmas pasiekė tobulą 50.00 % rezultatą.
+   * **Joringio** (51.56 %) ir **Almanto** (54.69 %) algoritmai taip pat pasirodė puikiai, išlaikydami labai stiprų sklaidos efektą.
+   * **Mato algoritmo** realizacija šiame teste pasirodė silpniausiai (16.02 %). Tai patvirtina ankstesnius spėjimus, jog naudojami tiesioginiai bitų poslinkiai (`<<`) be rotacijos praranda dalį entropijos, todėl bitai neišsimaišo pakankamai efektyviai visame 256 bitų bloke.
+
+### Galutinis Reitingas:
+
+1. **Almantas** – Geriausias balansas: neįtikėtinai didelis greitis išlaikant aukštą (virš 54 %) lavinos efektą.
+2. **Joringis** – Puikus ir stabilus sprendimas, geras greitis ir beveik idealus lavinos efektas.
+3. **Arnas** – Idealus lavinos efektas ir aukštas saugumas, bet atsilieka našumo/spartos rodikliais.
+4. **Mato Algoritmas** – Geras, stabilus pralaidumas ($O(n)$ sudėtingumas), tačiau trūksta matematinio sudėtingumo siekiant užtikrinti tinkamą bitų sklaidą (lavinos efektą).
