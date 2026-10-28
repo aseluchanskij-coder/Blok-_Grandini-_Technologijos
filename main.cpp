@@ -35,6 +35,27 @@ struct Blokas {
     string blokoHash;
 };
 
+string custom_hashas_string(const string& tekstas) {
+    vector<uint8_t> duomenys(tekstas.begin(), tekstas.end());
+    return custom_hashas(duomenys);
+}
+
+string serializuotiTransakcija(const Transakcija& tx) {
+    return tx.siuntejas + "|" + 
+           tx.gavejas + "|" + 
+           std::to_string(tx.suma) + "|" + 
+           std::to_string(tx.seka);
+}
+
+string serializuotiAntraste(const BlokoAnt& ant) {
+    return ant.praeitas_hash + "|" + 
+           std::to_string(ant.timestamp) + "|" + 
+           std::to_string(ant.versija) + "|" + 
+           ant.tx_root + "|" + 
+           std::to_string(ant.nonce) + "|" + 
+           std::to_string(ant.sudetingumas);
+}
+
 uint64_t baitaiIUInt64(const vector<uint8_t>& blokas, size_t pradzia) {
     uint64_t rezultatas = 0;
     for (int i = 0; i < 8; i++) {
