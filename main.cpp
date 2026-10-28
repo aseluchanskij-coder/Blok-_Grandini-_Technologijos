@@ -242,9 +242,20 @@ int main() {
 
         if (bloko_transakcijos.empty()) continue;
 
+        //kandidatinis blok
+        Blokas naujas_blokas;
+        naujas_blokas.transakcijos = bloko_transakcijos;
+        
+        //antraste uzpildom
+        naujas_blokas.antraste.praeitas_hash = blockchain.back().blokoHash; //grandinės susiejimas
+        naujas_blokas.antraste.timestamp = std::time(nullptr);
+        naujas_blokas.antraste.versija = 1;
+        naujas_blokas.antraste.tx_root = custom_hashas_string(visi_tx_id_kartu); 
+        naujas_blokas.antraste.sudetingumas = 3; 
+        naujas_blokas.antraste.nonce = 0; //pradedame speliot nuo 0
+
 
         ...
-
         
     return 0;
 }
