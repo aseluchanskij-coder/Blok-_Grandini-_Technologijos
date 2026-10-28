@@ -5,6 +5,8 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
+#include <map>
+#include <random>
 
 using std::cout;
 using std::vector;
@@ -12,14 +14,15 @@ using std::cin;
 using std::endl;
 using std::string;
 
+// Išankstinė deklaracija, kad custom_hashas_string žinotų apie šią funkciją
 string custom_hashas(vector<uint8_t> ivestis);
 
 struct Transakcija {
     string siuntejas;
     string gavejas;
-    std::int64_t suma; //int nes parasyta double nenaudot del netikslumu
+    std::int64_t suma; 
     std::uint64_t seka;
-    string txId; //maisa
+    string txId; 
 };
 
 struct BlokoAnt {
@@ -65,6 +68,7 @@ uint64_t baitaiIUInt64(const vector<uint8_t>& blokas, size_t pradzia) {
     }
     return rezultatas;
 }
+
 uint64_t suktiIKaire(uint64_t reiksme, unsigned int poslinkis) {
     return (reiksme << poslinkis) | (reiksme >> (64 - poslinkis));
 }
@@ -95,14 +99,10 @@ string custom_hashas(vector<uint8_t> ivestis) {
     for (int i = 7; i >= 0; i--) {
         padded.push_back((originalusIlgis >> (i * 8)) & 0xFF);
     }
-    
-    //suzinome kiek 32 baitu bloku
     size_t blokuSkaicius = padded.size() / 32;
 
-    //einame per kiekvieną bloką
     for (size_t b = 0; b < blokuSkaicius; b++) {
-        vector<uint8_t> dabartinisBlokas(32); //laikinai laikysime 32 baitus
-        
+        vector<uint8_t> dabartinisBlokas(32); 
         bool yraLyginis = ((b + 1) % 2 == 0); 
 
         for (int i = 0; i < 32; i++) {
@@ -113,14 +113,12 @@ string custom_hashas(vector<uint8_t> ivestis) {
             }
         }
         
-        
         uint64_t m[4];
         m[0] = baitaiIUInt64(dabartinisBlokas, 0);
         m[1] = baitaiIUInt64(dabartinisBlokas, 8);
         m[2] = baitaiIUInt64(dabartinisBlokas, 16);
         m[3] = baitaiIUInt64(dabartinisBlokas, 24);
 
-        //maisymas
         for (int r = 0; r < 16; r++) {
             state[0] = suktiIKaire(state[0] ^ m[0], 19) + state[1];
             state[1] = suktiIKaire(state[1] ^ m[1], 29) + state[2];
@@ -141,56 +139,57 @@ string custom_hashas(vector<uint8_t> ivestis) {
 }
 
 int main() {
-    vector<uint8_t> duomenys;
-    int pasirinkimas;
-
-    cout << "Pasirinkite ivesties buda:" << endl;
-    cout << "1 - Ivesti teksta ranka" << endl;
-    cout << "2 - Nuskaityti is failo" << endl;
-    cout << "Iveskite pasirinkima (1 arba 2): ";
-    cin >> pasirinkimas;
+    std::mt19937 gen(12345); //generatorius
+    std::uniform_int_distribution<int64_t> balanso_gen(100, 1000000); //riba
     
-    // Išvalome "Enter" paspaudimą po skaičiaus įvedimo, kad jis netrukdytų toliau
-    cin.ignore(10000, '\n'); 
+    std::map<string, int64_t> balansai; //mape laikom
+    vector<string> vartotoju_id;
+    int64_t pradine_bendra_suma = 0;
 
-    if (pasirinkimas == 1) {
-        string tekstas;
-        cout << "Iveskite teksta (galima vesti kelis zodzius arba nieko): ";
-        std::getline(cin, tekstas);
-
-        for (size_t i = 0; i < tekstas.length(); i++) {
-            duomenys.push_back(tekstas[i]);
-        }
-    } 
-    else if (pasirinkimas == 2) {
-        string failoPavadinimas;
-        cout << "Iveskite failo pavadinima (pvz., test.txt): ";
-        std::getline(cin, failoPavadinimas);
-
-        // Atidarome failą binariniu režimu (kad nuskaitytų lygiai taip, kaip guli atmintyje)
-        std::ifstream failas(failoPavadinimas, std::ios::binary);
-
-        if (!failas) {
-            cout << "KLAIDA: Nepavyko atidaryti failo '" << failoPavadinimas << "'!" << endl;
-            return 1; // Baigiame programą su klaida
-        }
-
-        // Skaitome failą po vieną baitą iki pat pabaigos
-        char baitas;
-        while (failas.get(baitas)) {
-            duomenys.push_back(static_cast<uint8_t>(baitas));
-        }
-        failas.close();
-    } 
-    else {
-        cout << "Neteisingas pasirinkimas!" << endl;
-        return 1;
+    for (int i = 0; i < 1000; i++) { //vartotojus generuojam
+        string id = "user_" + std::to_string(i);
+        int64_t pradinis_balansas = balanso_gen(gen);
+        
+        balansai[id] = pradinis_balansas;
+        vartotoju_id.push_back(id);
+        pradine_bendra_suma += pradinis_balansas;
     }
+    cout << "Sugeneruota vartotoju: " << balansai.size() << endl;
+    cout << "Bendra pradine suma tinkle: " << pradine_bendra_suma << endl;
 
-    cout << "Nuskaityta baitu: " << duomenys.size() << endl;
+    vector<Transakcija> transakciju_poolas;  //daba 10k transakciju generuojam
+    std::uniform_int_distribution<int> vartotojo_indekso_gen(0, 999);
+    std::uniform_int_distribution<int64_t> sumos_gen(1, 10000); // Suma nuo 1 iki 10 000
+
+    for (uint64_t i = 0; i < 10000; i++) { //pats generavimas
+        string siuntejas = vartotoju_id[vartotojo_indekso_gen(gen)];
+        string gavejas = vartotoju_id[vartotojo_indekso_gen(gen)];
+        
+        while (siuntejas == gavejas) {      //siuntejas negali but tuo pat metu ir gaveju vienoj transakcijoj
+            gavejas = vartotoju_id[vartotojo_indekso_gen(gen)];
+        }
+        Transakcija tx;
+        tx.siuntejas = siuntejas;
+        tx.gavejas = gavejas;
+        tx.suma = sumos_gen(gen);
+        tx.seka = i; //unikalus nuoseklus numeris
+        
+        //serializacija
+        string serializuota = serializuotiTransakcija(tx);
+        tx.txId = custom_hashas_string(serializuota);
+        
+        transakciju_poolas.push_back(tx);
+    }
     
-    string rezultatas = custom_hashas(duomenys);
-    cout << "Gauta maisa (Hash): " << rezultatas << endl;
+    cout << "Sugeneruota transakciju: " << transakciju_poolas.size() << endl;
+    
+    //small test
+    cout << "\nPirmos transakcijos pavyzdys:" << endl;
+    cout << "Siuntejas: " << transakciju_poolas[0].siuntejas << endl;
+    cout << "Gavejas: " << transakciju_poolas[0].gavejas << endl;
+    cout << "Suma: " << transakciju_poolas[0].suma << endl;
+    cout << "Seka: " << transakciju_poolas[0].seka << endl;
+    cout << "Tx ID (maisa): " << transakciju_poolas[0].txId << endl;
 
     return 0;
 }
