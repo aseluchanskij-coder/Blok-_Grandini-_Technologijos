@@ -272,7 +272,42 @@ int main() {
 
         auto block_end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double, std::milli> block_duration = block_end - block_start;
-        ...
+        
+
+        //patvirtiname tikrajame
+        balansai = laikinieji_balansai; 
+        
+        //bloka prijungiam
+        blockchain.push_back(naujas_blokas); 
+
+        // info
+        cout << "Iškastas Blokas #" << blockchain.size() - 1 
+             << " | Tx: " << bloko_transakcijos.size() 
+             << " | Nonce: " << naujas_blokas.antraste.nonce 
+             << " | Laikas: " << block_duration.count() << " ms" 
+             << " | Hash: " << naujas_blokas.blokoHash << endl;
+             
+    } 
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> total_duration = end_time - start_time;
+
+    //skaiciuojam pinigus
+    int64_t galutine_bendra_suma = 0;
+    for (const auto& pora : balansai) {
+        galutine_bendra_suma += pora.second;
+    }
+    cout << "Priimtu bloku (su Genesis): " << blockchain.size() << endl;
+    cout << "Atmestos transakcijos: " << atmestos_transakcijos << endl;
+    cout << "Pradine suma: " << pradine_bendra_suma << endl;
+    cout << "Galutine suma: " << galutine_bendra_suma << endl;
+    
+    if (pradine_bendra_suma == galutine_bendra_suma) {
+        cout << "Pinigai nedingo" << endl;
+    } else {
+        cout << "Pinigai dingo" << endl;
+    }
+    cout << "Visas kasimo laikas: " << total_duration.count() << " s" << endl;
         
     return 0;
 }
