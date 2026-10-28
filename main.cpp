@@ -12,6 +12,8 @@ using std::cin;
 using std::endl;
 using std::string;
 
+string custom_hashas(vector<uint8_t> ivestis);
+
 struct Transakcija {
     string siuntejas;
     string gavejas;
