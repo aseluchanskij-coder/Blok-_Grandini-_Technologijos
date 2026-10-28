@@ -209,5 +209,42 @@ int main() {
     
     cout << "\nGenesis maisa: " << genesis.blokoHash << endl;
 
+    cout << "\nMatavimas bloko kasimo:" << endl;
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    int atmestos_transakcijos = 0;
+    size_t dabartinis_tx_indeksas = 0; 
+
+    //sukame cikla kol patikrinsim transakcijas
+    while (dabartinis_tx_indeksas < transakciju_poolas.size()) {
+        vector<Transakcija> bloko_transakcijos;
+        std::map<string, int64_t> laikinieji_balansai = balansai; //kopija busenos patikrai
+        string visi_tx_id_kartu = ""; //txruoot reikes visu id
+
+        int paimta_i_kandidata = 0;
+        
+        //iki 100 transakciju salyga
+        while (paimta_i_kandidata < 100 && dabartinis_tx_indeksas < transakciju_poolas.size()) {
+            Transakcija tx = transakciju_poolas[dabartinis_tx_indeksas];
+            dabartinis_tx_indeksas++;
+            
+            //ar uztenka lesu siuntejui
+            if (laikinieji_balansai[tx.siuntejas] >= tx.suma) {
+                laikinieji_balansai[tx.siuntejas] -= tx.suma; //pinigai kopijoje
+                laikinieji_balansai[tx.gavejas] += tx.suma;   //gavejui pinigai kopijoje
+                bloko_transakcijos.push_back(tx);
+                visi_tx_id_kartu += tx.txId; //id bloko maisai
+            } else {
+                atmestos_transakcijos++; //jei neuztenka lesu skaitliukui pridedam
+            }
+            paimta_i_kandidata++;
+        }
+
+        if (bloko_transakcijos.empty()) continue;
+
+
+        ...
+
+        
     return 0;
 }
