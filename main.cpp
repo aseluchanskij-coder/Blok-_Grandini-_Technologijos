@@ -6,6 +6,8 @@
 #include <iomanip>
 #include <fstream>
 #include <map>
+#include <chrono>
+#include <ctime>
 #include <random>
 
 using std::cout;
@@ -190,6 +192,22 @@ int main() {
     cout << "Suma: " << transakciju_poolas[0].suma << endl;
     cout << "Seka: " << transakciju_poolas[0].seka << endl;
     cout << "Tx ID (maisa): " << transakciju_poolas[0].txId << endl;
+
+    //genesis
+    vector<Blokas> blockchain;
+
+    Blokas genesis;
+    genesis.antraste.praeitas_hash = string(64, '0'); //64 nuliai
+    genesis.antraste.timestamp = std::time(nullptr); //dabartinis laikas
+    genesis.antraste.versija = 1;
+    genesis.antraste.tx_root = custom_hashas_string(""); //maisa nuo nieko
+    genesis.antraste.nonce = 0;
+    genesis.antraste.sudetingumas = 3;
+    
+    genesis.blokoHash = custom_hashas_string(serializuotiAntraste(genesis.antraste));
+    blockchain.push_back(genesis);
+    
+    cout << "\nGenesis maisa: " << genesis.blokoHash << endl;
 
     return 0;
 }
