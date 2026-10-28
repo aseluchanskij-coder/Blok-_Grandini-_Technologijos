@@ -12,6 +12,29 @@ using std::cin;
 using std::endl;
 using std::string;
 
+struct Transakcija {
+    string siuntejas;
+    string gavejas;
+    std::int64_t suma; //int nes parasyta double nenaudot del netikslumu
+    std::uint64_t seka;
+    string txId; //maisa
+};
+
+struct BlokoAnt {
+    string praeitas_hash;
+    uint64_t timestamp;
+    int versija;
+    string tx_root;
+    uint64_t nonce;
+    int sudetingumas;
+};
+
+struct Blokas {
+    BlokoAnt antraste;
+    vector<Transakcija> transakcijos;
+    string blokoHash;
+};
+
 uint64_t baitaiIUInt64(const vector<uint8_t>& blokas, size_t pradzia) {
     uint64_t rezultatas = 0;
     for (int i = 0; i < 8; i++) {
