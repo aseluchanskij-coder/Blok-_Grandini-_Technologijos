@@ -254,7 +254,24 @@ int main() {
         naujas_blokas.antraste.sudetingumas = 3; 
         naujas_blokas.antraste.nonce = 0; //pradedame speliot nuo 0
 
+        string kandidato_maisa;
+        auto block_start = std::chrono::high_resolution_clock::now();
 
+        //kasimas
+        while (true) {
+            kandidato_maisa = custom_hashas_string(serializuotiAntraste(naujas_blokas.antraste));
+            
+            //randame 000""""""""" pavyko
+            if (kandidato_maisa.substr(0, 3) == "000") {
+                naujas_blokas.blokoHash = kandidato_maisa;
+                break;
+            }
+            //jei netiko didinam nonca
+            naujas_blokas.antraste.nonce++; 
+        }
+
+        auto block_end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double, std::milli> block_duration = block_end - block_start;
         ...
         
     return 0;
