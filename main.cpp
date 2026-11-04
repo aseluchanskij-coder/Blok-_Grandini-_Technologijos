@@ -140,6 +140,31 @@ string custom_hashas(vector<uint8_t> ivestis) {
     return ss.str();
 }
 
+string merkleRoot(const vector<Transakcija>& transakcijos) {
+    // Transakciju hashus sudedame i bendra vektoriu
+    vector<string> txHashes;
+    for (const auto& tx : transakcijos) {
+        txHashes.push_back(tx.txId);
+    }
+    if (txHashes.empty()) {
+        return string(64, '0'); 
+    }
+
+    while(txHashes.size() > 1) {
+        vector<string> suporuotiHashai;
+        for(int i = 0; i < txHashes.size(); i += 2){
+            if(i + 1 < txHashes.size()){
+                suporuotiHashai.push_back(custom_hashas_string(txHashes[i] + txHashes[i + 1]));
+            }
+            else {
+                suporuotiHashai.push_back(custom_hashas_string(txHashes[i] + txHashes[i]));
+            }
+        }
+        txHashes = suporuotiHashai;
+    }
+    return txHashes[0];
+}
+
 int main() {
     std::mt19937 gen(12345); //generatorius
     std::uniform_int_distribution<int64_t> balanso_gen(100, 1000000); //riba
