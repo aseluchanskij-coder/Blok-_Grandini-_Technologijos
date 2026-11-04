@@ -18,6 +18,7 @@ Ankstesnėje versijoje transakcijų hash'ai buvo sudedami vienas su kitu ir taip
     - Kandidatu nugalėtoju tampa tas blokas, iš kurio pirmo randamas tinkamas hash
     - Jei vieno ciklo metu nerandamas laimėtojas, didinamas nonce
 6) Iš transakcijų poolo panaikinamos transakcijos, kurios priklausė blokui laimėtojui
+## Testai
 ### Testas 1
 1) Šaknys, kai transakcijų kiekiai skirtingi
 
@@ -51,6 +52,48 @@ Ankstesnėje versijoje transakcijų hash'ai buvo sudedami vienas su kitu ir taip
 | Sukeista šaknis  | 65c4d693ea01fe916a5970f971a887c20ec818ef86bc1f590c331f7dd4d497a6 |
 
 - Tvarkos pakeitimas kardinaliai pakeičia šaknį, kolizijos čia taip pat neaptinkame.
+
+### Teisingumo testai
+#### Lėšų nepakankamumas, pasikartojantis transakcijos id
+1) Buvo sukurti dalyviai Jonas ir Ona su balansais, bei transakcijos tarp jų:
+```
+    std::map<string, int64_t> balansai;
+    balansai["Jonas"] = 100;
+    balansai["Ona"] = 50;
+    
+    Transakcija tx1 = {"Jonas", "Ona", 70, 1, "id_1"};
+    Transakcija tx2 = {"Jonas", "Ona", 50, 2, "id_2"};
+    Transakcija tx3 = {"Jonas", "Ona", 30, 3, "id_1"};
+```
+2) Laukiami rezultatai:
+    - tx1 turėtų praeiti.
+    - tx2 turėtų nepraeiti, kadangi po tx1 transakcijos pas Joną liko balansas 30, o nori išsiųsti 50.
+    - tx3 turėtų nepraeiti, kadangi jos id sutampa su tx1.
+3) Gauti rezultatai:
+```
+Patvirtinta (Validus): 70 nuo Jonas (Likutis: 30)
+Atmesta (Truksta lesu): Nori siusti 50, bet turi tik 30
+Atmesta (Dubliuotas ID): id_1
+Rezultatas: Jonas galutinis: 30, Ona galutinis: 120
+```
+* Gauti rezultatai atitiko, ko tikėjomės. Testas teisingas!
+
+#### PoW pažeidimas
+- Pradinis bloko hash: 000cfbab84fbd55a24be0036f9580eae3824738d026d85941484eabda5ed4a46
+- Pradinis nonce: 1969
+1) Prie jau įvykusių transakcijų pridedama netikra hakerio transakcija:
+```
+    Transakcija netikra_tx = {"Hakeris", "Hakeris", 10000, 0, "netikras_id"};
+    originalus_test_blokas.transakcijos.push_back(netikra_tx);
+```
+2) Iš naujo randama antraštės root ir suskaičiuojamas naujas bloko hash (su senu nonce):
+```
+    originalus_test_blokas.antraste.tx_root = merkleRoot(originalus_test_blokas.transakcijos);
+    string naujas_hash = custom_hashas_string(serializuotiAntraste(originalus_test_blokas.antraste));
+```
+- Po pridėtos naujos transakcijos naujas hash:  9a68162a3bddf8bf2766474dd621351180f7fd49c45244fedb9720bb7cabff77
+- PoW reikalavimas, kad hash prasidėtų "000" sugadintas. Kadangi bloko turinys pasikeitė, senas nonce yra nebetinkamas. Taigi PoW veikia tinkamai :)
+
 
 ## Kodėl nėra P2P konsensusas?
 Ši simuliacija nėra pilnavertis P2P konsensusas dėl šių priežasčių:
