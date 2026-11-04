@@ -225,7 +225,7 @@ int main() {
     genesis.antraste.praeitas_hash = string(64, '0'); //64 nuliai
     genesis.antraste.timestamp = std::time(nullptr); //dabartinis laikas
     genesis.antraste.versija = 1;
-    genesis.antraste.tx_root = custom_hashas_string(""); //maisa nuo nieko
+    genesis.antraste.tx_root = merkleRoot(genesis.transakcijos); //maisa nuo nieko
     genesis.antraste.nonce = 0;
     genesis.antraste.sudetingumas = 3;
     
