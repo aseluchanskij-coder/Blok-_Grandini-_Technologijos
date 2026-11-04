@@ -10,6 +10,9 @@
 #include <ctime>
 #include <random>
 #include <algorithm>
+#include <thread>
+#include <atomic>
+#include <mutex>
 
 using std::cout;
 using std::vector;
@@ -153,7 +156,7 @@ string merkleRoot(const vector<Transakcija>& transakcijos) {
 
     while(txHashes.size() > 1) {
         vector<string> suporuotiHashai;
-        for(int i = 0; i < txHashes.size(); i += 2){
+        for(size_t i = 0; i < txHashes.size(); i += 2){
             if(i + 1 < txHashes.size()){
                 suporuotiHashai.push_back(custom_hashas_string(txHashes[i] + txHashes[i + 1]));
             }
@@ -219,6 +222,28 @@ void testMerkleTree() {
         cout << "-> Rezultatas: Sukeitus tvarka, saknis sekmingai pasikeite!" << endl;
     }
     cout << "==========================================\n" << endl;
+}
+
+// Nauja funkcija lygiagrečiam kasimui
+void kasimoDarbuotojas(int id, Blokas& kandidatas, std::atomic<bool>& rasta, int& laimetojas, std::mutex& mtx) {
+    // Kiekvienas kandidatas pradeda spėlioti nuo skirtingo taško, kad nebūtų persidengimo
+    kandidatas.antraste.nonce = id * 10000000; 
+
+    while (!rasta.load()) {
+        string hash = custom_hashas_string(serializuotiAntraste(kandidatas.antraste));
+        
+        if (hash.substr(0, 3) == "000") {
+            bool tikimasi = false;
+            // Saugiai pakeičiame flag'ą. Jei pavyksta, mes laimėjome!
+            if (rasta.compare_exchange_strong(tikimasi, true)) {
+                std::lock_guard<std::mutex> lock(mtx);
+                kandidatas.blokoHash = hash;
+                laimetojas = id;
+            }
+            break;
+        }
+        kandidatas.antraste.nonce++;
+    }
 }
 
 int main() {
@@ -352,27 +377,24 @@ int main() {
             break;
         }
 
-        // Kasimas
+        // Lygiagretus Kasimas
         int laimetojas = -1;
-        
-        while (laimetojas == -1) {
-            for (int k = 0; k < 5; k++) {
-                if (kandidatai[k].transakcijos.empty()) continue; 
-                
-                // Kiekvienas kandidatas gauna 1000 bandymų
-                for (int bandymas = 0; bandymas < 1000; bandymas++) {
-                    string hash = custom_hashas_string(serializuotiAntraste(kandidatai[k].antraste));
-                    //jei hash prasideda 000 mums tinka
-                    if (hash.substr(0, 3) == "000") {
-                        kandidatai[k].blokoHash = hash;
-                        laimetojas = k;
-                        break;
-                    }
-                    kandidatai[k].antraste.nonce++;
-                }
-                if (laimetojas != -1) break;
+        std::atomic<bool> rasta(false);
+        std::mutex mtx;
+        vector<std::thread> gijos;
+
+        for (int k = 0; k < 5; k++) {
+            if (kandidatai[k].transakcijos.empty()) continue;
+            gijos.push_back(std::thread(kasimoDarbuotojas, k, std::ref(kandidatai[k]), std::ref(rasta), std::ref(laimetojas), std::ref(mtx)));
+        }
+
+        //pabaigia darba gijos
+        for (auto& t : gijos) {
+            if (t.joinable()) {
+                t.join();
             }
         }
+        
         Blokas nugaletojas = kandidatai[laimetojas];
         balansai = kandidatu_balansai[laimetojas]; // Priskyrimas tikros būsenos
         blockchain.push_back(nugaletojas);
