@@ -9,6 +9,7 @@
 #include <chrono>
 #include <ctime>
 #include <random>
+#include <algorithm>
 
 using std::cout;
 using std::vector;
@@ -300,82 +301,102 @@ int main() {
     cout << "\nMatavimas bloko kasimo:" << endl;
     auto start_time = std::chrono::high_resolution_clock::now();
 
+    // pakeitimai pagal v0.2 reikalavimus
     int atmestos_transakcijos = 0;
-    size_t dabartinis_tx_indeksas = 0; 
+    vector<Transakcija> laukiancios_tx = transakciju_poolas;
+    while(!laukiancios_tx.empty()) {
+        vector<Blokas> kandidatai(5); //sukuriami 5 kandidatai
+        vector<std::map<string, int64_t>> kandidatu_balansai(5);
+        bool sukurta_validziu = false;
 
-    //sukame cikla kol patikrinsim transakcijas
-    while (dabartinis_tx_indeksas < transakciju_poolas.size()) {
-        vector<Transakcija> bloko_transakcijos;
-        std::map<string, int64_t> laikinieji_balansai = balansai; //kopija busenos patikrai
-        //string visi_tx_id_kartu = ""; //txruoot reikes visu id
-
-        int paimta_i_kandidata = 0;
-        
-        //iki 100 transakciju salyga
-        while (paimta_i_kandidata < 100 && dabartinis_tx_indeksas < transakciju_poolas.size()) {
-            Transakcija tx = transakciju_poolas[dabartinis_tx_indeksas];
-            dabartinis_tx_indeksas++;
+        for(int k = 0; k < 5; k++){
+            kandidatu_balansai[k] = balansai; 
             
-            //ar uztenka lesu siuntejui
-            if (laikinieji_balansai[tx.siuntejas] >= tx.suma) {
-                laikinieji_balansai[tx.siuntejas] -= tx.suma; //pinigai kopijoje
-                laikinieji_balansai[tx.gavejas] += tx.suma;   //gavejui pinigai kopijoje
-                bloko_transakcijos.push_back(tx);
-                //visi_tx_id_kartu += tx.txId; //id bloko maisai
-            } else {
-                atmestos_transakcijos++; //jei neuztenka lesu skaitliukui pridedam
+            // transakcijos sumaisomas, kad blokai butu skirtingi
+            vector<Transakcija> sumaisytos = laukiancios_tx;
+            std::shuffle(sumaisytos.begin(), sumaisytos.end(), gen);
+            
+            int paimta = 0;
+            std::map<string, bool> id_dublikatai; // Apsauga nuo vienodų ID
+            
+            for (const auto& tx : sumaisytos) {
+                if (paimta >= 100) break;
+                
+                // Validacijos
+                if (tx.suma <= 0) continue; 
+                if (tx.siuntejas == tx.gavejas) continue;
+                if (id_dublikatai[tx.txId]) continue;
+                
+                // Balando tikrinimas
+                if (kandidatu_balansai[k][tx.siuntejas] >= tx.suma) {
+                    kandidatu_balansai[k][tx.siuntejas] -= tx.suma;
+                    kandidatu_balansai[k][tx.gavejas] += tx.suma;
+                    
+                    kandidatai[k].transakcijos.push_back(tx);
+                    id_dublikatai[tx.txId] = true;
+                    paimta++;
+                    sukurta_validziu = true;
+                }
             }
-            paimta_i_kandidata++;
+            kandidatai[k].antraste.praeitas_hash = blockchain.back().blokoHash;
+            kandidatai[k].antraste.timestamp = std::time(nullptr);
+            kandidatai[k].antraste.versija = 1;
+            kandidatai[k].antraste.tx_root = merkleRoot(kandidatai[k].transakcijos);
+            kandidatai[k].antraste.sudetingumas = 3;
+            kandidatai[k].antraste.nonce = 0;
         }
 
-        if (bloko_transakcijos.empty()) continue;
-
-        //kandidatinis blok
-        Blokas naujas_blokas;
-        naujas_blokas.transakcijos = bloko_transakcijos;
-        
-        //antraste uzpildom
-        naujas_blokas.antraste.praeitas_hash = blockchain.back().blokoHash; //grandinės susiejimas
-        naujas_blokas.antraste.timestamp = std::time(nullptr);
-        naujas_blokas.antraste.versija = 1;
-        naujas_blokas.antraste.tx_root = merkleRoot(bloko_transakcijos);
-        naujas_blokas.antraste.sudetingumas = 3; 
-        naujas_blokas.antraste.nonce = 0; //pradedame speliot nuo 0
-
-        string kandidato_maisa;
-        auto block_start = std::chrono::high_resolution_clock::now();
-
-        //kasimas
-        while (true) {
-            kandidato_maisa = custom_hashas_string(serializuotiAntraste(naujas_blokas.antraste));
-            
-            //randame 000""""""""" pavyko
-            if (kandidato_maisa.substr(0, 3) == "000") {
-                naujas_blokas.blokoHash = kandidato_maisa;
-                break;
-            }
-            //jei netiko didinam nonca
-            naujas_blokas.antraste.nonce++; 
+        // Jei nei vienam kandidatui nepavyko rasti validžių transakcijų, baigiam
+        if (!sukurta_validziu) {
+            atmestos_transakcijos += laukiancios_tx.size();
+            break;
         }
 
-        auto block_end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<double, std::milli> block_duration = block_end - block_start;
+        // Kasimas
+        int laimetojas = -1;
         
+        while (laimetojas == -1) {
+            for (int k = 0; k < 5; k++) {
+                if (kandidatai[k].transakcijos.empty()) continue; 
+                
+                // Kiekvienas kandidatas gauna 1000 bandymų
+                for (int bandymas = 0; bandymas < 1000; bandymas++) {
+                    string hash = custom_hashas_string(serializuotiAntraste(kandidatai[k].antraste));
+                    //jei hash prasideda 000 mums tinka
+                    if (hash.substr(0, 3) == "000") {
+                        kandidatai[k].blokoHash = hash;
+                        laimetojas = k;
+                        break;
+                    }
+                    kandidatai[k].antraste.nonce++;
+                }
+                if (laimetojas != -1) break;
+            }
+        }
+        Blokas nugaletojas = kandidatai[laimetojas];
+        balansai = kandidatu_balansai[laimetojas]; // Priskyrimas tikros būsenos
+        blockchain.push_back(nugaletojas);
 
-        //patvirtiname tikrajame
-        balansai = laikinieji_balansai; 
+        // Išvalome nugalėtojo transakcijas iš pagrindinio pool'o
+        std::map<string, bool> ismestos_tx;
+        for (const auto& tx : nugaletojas.transakcijos) {
+            ismestos_tx[tx.txId] = true;
+        }
         
-        //bloka prijungiam
-        blockchain.push_back(naujas_blokas); 
+        vector<Transakcija> naujas_poolas;
+        for (const auto& tx : laukiancios_tx) {
+            if (!ismestos_tx[tx.txId]) {
+                naujas_poolas.push_back(tx);
+            }
+        }
+        laukiancios_tx = naujas_poolas; // Atnaujinam laukiančias kitam raundui
 
-        // info
         cout << "Iškastas Blokas #" << blockchain.size() - 1 
-             << " | Tx: " << bloko_transakcijos.size() 
-             << " | Nonce: " << naujas_blokas.antraste.nonce 
-             << " | Laikas: " << block_duration.count() << " ms" 
-             << " | Hash: " << naujas_blokas.blokoHash << endl;
-             
-    } 
+             << " | Laimėjo Kand: " << laimetojas + 1 
+             << " | Tx: " << nugaletojas.transakcijos.size() 
+             << " | Nonce: " << nugaletojas.antraste.nonce 
+             << " | Hash: " << nugaletojas.blokoHash << endl;
+    }
 
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> total_duration = end_time - start_time;
