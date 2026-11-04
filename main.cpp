@@ -17,15 +17,24 @@ using std::cin;
 using std::endl;
 using std::string;
 
-// Išankstinė deklaracija, kad custom_hashas_string žinotų apie šią funkciją
 string custom_hashas(vector<uint8_t> ivestis);
 
+struct TXInput {
+    string ankstesnis_txId; 
+    int isvesties_indeksas; 
+    string savininkas;      
+};
+
+struct TXOutput {
+    int64_t suma;           
+    string gavejas;         
+};
+
 struct Transakcija {
-    string siuntejas;
-    string gavejas;
-    std::int64_t suma; 
-    std::uint64_t seka;
-    string txId; 
+    vector<TXInput> ivestys;   
+    vector<TXOutput> isvestys; 
+    std::uint64_t seka;        
+    string txId;              
 };
 
 struct BlokoAnt {
