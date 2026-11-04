@@ -1,7 +1,23 @@
 # Merkle tree
-### Palyginimas su v0.1 versija
+## Palyginimas su v0.1 versija
 Ankstesnėje versijoje transakcijų hash'ai buvo sudedami vienas su kitu ir taip gaunamas bendras hash. Pritaikius Merkle medį dabar transakcijų hash'ai yra sudedami poromis (jei nėra poros su kopija), kol gaunamas vienas root hash.
 
+## Pakeitimų logikos paaiškinimas
+1) Sukuriami 5 blokai kandidatai
+2) Transakcijos sumaišomos, kad kandidatai skirtųsi
+3) Atliekama, kol apdorojamos 100 transakcijų:
+    - Teigiamos sumos validacija
+    - Skirtingų siuntėjų/gavėjų validacija
+    - Nepasikartojančių transakcijų validacija
+    - Balanso validacija (ar siuntėjas turi pakankamai lėšų)
+    Praėjus šias validacijas transakcija priimama ir apdorojama toliau
+4) Sukuriama kandidatų antraštės
+5) Ieškomas kandidatas laimėtojas:
+    - Kiekvienam kandidatui skiriama 1000 bandymų
+    - Kadangi sudėtingumas yra 3, tai ieškoma hash, kuris prasideda "000"
+    - Kandidatu nugalėtoju tampa tas blokas, iš kurio pirmo randamas tinkamas hash
+    - Jei vieno ciklo metu nerandamas laimėtojas, didinamas nonce
+6) Iš transakcijų poolo panaikinamos transakcijos, kurios priklausė blokui laimėtojui
 ### Testas 1
 1) Šaknys, kai transakcijų kiekiai skirtingi
 
