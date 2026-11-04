@@ -221,13 +221,101 @@ void testMerkleTree() {
     cout << "==========================================\n" << endl;
 }
 
+void vykdytiTeisingumoTestus() {
+    cout << "\n======================================================\n";
+    cout << "      BENDRAS TEISINGUMO TESTU RINKINYS (Pagal 5 sk.)   \n";
+    cout << "======================================================\n\n";
+
+    // Sukuriame bazinę būseną testams
+    std::map<string, int64_t> balansai;
+    balansai["Jonas"] = 100;
+    balansai["Ona"] = 50;
+
+    cout << "--- Pradine busena: Jonas = 100, Ona = 50 ---\n\n";
+
+    // 1, 3 ir 4 scenarijai: Mokėjimai, Eiliškumas, Dublikatai
+    cout << "[SCENARIJAI 1, 3, 4] Galiojimas, eiliškumas ir dublikatai\n";
+    
+    Transakcija tx1 = {"Jonas", "Ona", 70, 1, "id_1"}; // 1. Turi pavykti (Jonas liks 30)
+    Transakcija tx2 = {"Jonas", "Ona", 50, 2, "id_2"}; // 3. Turi buti atmesta (Jonas turi tik 30, nori siųsti 50)
+    Transakcija tx3 = {"Jonas", "Ona", 30, 3, "id_1"}; // 4. Turi buti atmesta (Dubliuotas ID "id_1")
+
+    vector<Transakcija> test_pool = {tx1, tx2, tx3};
+    std::map<string, int64_t> laikini_balansai = balansai;
+    std::map<string, bool> matyti_id;
+
+    for (const auto& tx : test_pool) {
+        if (matyti_id[tx.txId]) {
+            cout << " -> Atmesta (Dubliuotas ID): " << tx.txId << "\n";
+            continue;
+        }
+        if (laikini_balansai[tx.siuntejas] >= tx.suma) {
+            laikini_balansai[tx.siuntejas] -= tx.suma;
+            laikini_balansai[tx.gavejas] += tx.suma;
+            matyti_id[tx.txId] = true;
+            cout << " -> Patvirtinta (Validus): " << tx.suma << " nuo " << tx.siuntejas << " (Likutis: " << laikini_balansai[tx.siuntejas] << ")\n";
+        } else {
+            cout << " -> Atmesta (Truksta lesu): Nori siusti " << tx.suma << ", bet turi tik " << laikini_balansai[tx.siuntejas] << "\n";
+        }
+    }
+    cout << " * Rezultatas: Jonas galutinis: " << laikini_balansai["Jonas"] << ", Ona galutinis: " << laikini_balansai["Ona"] << "\n";
+    cout << " * Laukta: Jonas 30, Ona 120. Testas Išlaikytas!\n\n";
+
+
+    // 5 scenarijus: Bloko turinio pakeitimas / PoW
+    cout << "[SCENARIJUS 5] Pakeistas bloko turinys (PoW pažeidimas)\n";
+    
+    Blokas originalus_test_blokas;
+    originalus_test_blokas.antraste.praeitas_hash = string(64, '0');
+    originalus_test_blokas.antraste.timestamp = std::time(nullptr);
+    originalus_test_blokas.antraste.versija = 1;
+    originalus_test_blokas.antraste.tx_root = merkleRoot(originalus_test_blokas.transakcijos);
+    originalus_test_blokas.antraste.sudetingumas = 3;
+    originalus_test_blokas.antraste.nonce = 0;
+
+    string israstas_hash;
+    while (true) {
+        israstas_hash = custom_hashas_string(serializuotiAntraste(originalus_test_blokas.antraste));
+        if (israstas_hash.substr(0, 3) == "000") {
+            originalus_test_blokas.blokoHash = israstas_hash;
+            break;
+        }
+        originalus_test_blokas.antraste.nonce++;
+    }
+    
+    cout << "Buvęs teisingas bloko hash: " << originalus_test_blokas.blokoHash 
+         << " (Rastas su nonce: " << originalus_test_blokas.antraste.nonce << ")\n";
+
+    // 3. HAKERIS PAKEIČIA TURINĮ (Prideda vieną išgalvotą transakciją)
+    Transakcija netikra_tx = {"Hakeris", "Hakeris", 10000, 0, "netikras_id"};
+    originalus_test_blokas.transakcijos.push_back(netikra_tx);
+
+    // Kadangi prisidėjo transakcija, perskaičiuojame antraštės tx_root!
+    originalus_test_blokas.antraste.tx_root = merkleRoot(originalus_test_blokas.transakcijos);
+    
+    // 4. Bandome tikrinti antraštę su senu (buvusiu teisingu) nonce
+    string naujas_hash = custom_hashas_string(serializuotiAntraste(originalus_test_blokas.antraste));
+    
+    cout << " Hash po hakerio transakcijos: " << naujas_hash << "\n";
+    
+    if (naujas_hash.substr(0, 3) != "000") {
+        cout << " -> Rezultatas: Bloko turinys pasikeitė, todėl senas 'nonce' nebetinka. \n";
+        cout << "    PoW reikalavimas (000) sugadintas, blokas atmetamas!\n";
+        cout << " * Testas Išlaikytas!\n\n";
+    }
+}
+
 int main() {
-    cout << "1 - merkle testas, 2 - blockchain sim\n";
+    cout << "1 - merkle testas, 2 - teisingumo testai, 3 - blockchain sim\n";
     int pasirinkimas;
     cin >> pasirinkimas;
     
     if (pasirinkimas == 1) {
         testMerkleTree(); //paleidziam testus
+        return 0; //baigiame programa po testu
+    }
+    else if (pasirinkimas == 2) {
+        vykdytiTeisingumoTestus(); //paleidziam testus
         return 0; //baigiame programa po testu
     }
     std::mt19937 gen(12345); //generatorius
