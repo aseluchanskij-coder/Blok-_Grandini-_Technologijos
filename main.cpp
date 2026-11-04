@@ -165,7 +165,70 @@ string merkleRoot(const vector<Transakcija>& transakcijos) {
     return txHashes[0];
 }
 
+void testMerkleTree() {
+    cout << "\n=== UZDUOTIS: MERKLE MEDZIO TESTAVIMAS ===" << endl;
+
+    // 1. Sukuriame 5 bazines transakcijas testams
+    vector<Transakcija> txs(5);
+    for (int i = 0; i < 5; i++) {
+        txs[i].siuntejas = "Alice";
+        txs[i].gavejas = "Bob";
+        txs[i].suma = 100 * (i + 1);
+        txs[i].seka = i;
+        txs[i].txId = custom_hashas_string(serializuotiTransakcija(txs[i]));
+    }
+
+    // 2. Patikriname atvejus su 1, 2, 3 ir 5 transakcijomis
+    cout << "1) Skirtingu kiekiu saknys:" << endl;
+    vector<int> kiekiai = {1, 2, 3, 5};
+    for (int kiekis : kiekiai) {
+        vector<Transakcija> dalis(txs.begin(), txs.begin() + kiekis);
+        cout << kiekis << " transakciju saknis: " << merkleRoot(dalis) << endl;
+    }
+
+    // 3. Pakeisto turinio testas (naudosime 3 transakcijas)
+    cout << "\n2) Turinio keitimo testas (3 transakcijos):" << endl;
+    vector<Transakcija> originalios = {txs[0], txs[1], txs[2]};
+    string originaliSaknis = merkleRoot(originalios);
+    cout << "Originali saknis: " << originaliSaknis << endl;
+
+    vector<Transakcija> pakeistos = originalios;
+    pakeistos[0].suma = 9999; // Keiciame suma (turini)
+    pakeistos[0].txId = custom_hashas_string(serializuotiTransakcija(pakeistos[0])); // Perskaiciuojame ID!
+    string pakeistaSaknis = merkleRoot(pakeistos);
+    cout << "Pakeista saknis:  " << pakeistaSaknis << endl;
+    
+    if (originaliSaknis != pakeistaSaknis) {
+        cout << "-> Rezultatas: Pakeitus turini, saknis sekmingai pasikeite!" << endl;
+    }
+
+    // 4. Sukeistos tvarkos testas (naudosime tas pacias 3 originalias)
+    cout << "\n3) Tvarkos keitimo testas (3 transakcijos):" << endl;
+    vector<Transakcija> sukeistos = originalios;
+    
+    // Sukeiciame pirma su antra
+    Transakcija laikina = sukeistos[0];
+    sukeistos[0] = sukeistos[1];
+    sukeistos[1] = laikina;
+    
+    string sukeistaSaknis = merkleRoot(sukeistos);
+    cout << "Sukeista saknis:  " << sukeistaSaknis << endl;
+    
+    if (originaliSaknis != sukeistaSaknis) {
+        cout << "-> Rezultatas: Sukeitus tvarka, saknis sekmingai pasikeite!" << endl;
+    }
+    cout << "==========================================\n" << endl;
+}
+
 int main() {
+    cout << "1 - merkle testas, 2 - blockchain sim\n";
+    int pasirinkimas;
+    cin >> pasirinkimas;
+    
+    if (pasirinkimas == 1) {
+        testMerkleTree(); //paleidziam testus
+        return 0; //baigiame programa po testu
+    }
     std::mt19937 gen(12345); //generatorius
     std::uniform_int_distribution<int64_t> balanso_gen(100, 1000000); //riba
     
@@ -244,7 +307,7 @@ int main() {
     while (dabartinis_tx_indeksas < transakciju_poolas.size()) {
         vector<Transakcija> bloko_transakcijos;
         std::map<string, int64_t> laikinieji_balansai = balansai; //kopija busenos patikrai
-        string visi_tx_id_kartu = ""; //txruoot reikes visu id
+        //string visi_tx_id_kartu = ""; //txruoot reikes visu id
 
         int paimta_i_kandidata = 0;
         
@@ -258,7 +321,7 @@ int main() {
                 laikinieji_balansai[tx.siuntejas] -= tx.suma; //pinigai kopijoje
                 laikinieji_balansai[tx.gavejas] += tx.suma;   //gavejui pinigai kopijoje
                 bloko_transakcijos.push_back(tx);
-                visi_tx_id_kartu += tx.txId; //id bloko maisai
+                //visi_tx_id_kartu += tx.txId; //id bloko maisai
             } else {
                 atmestos_transakcijos++; //jei neuztenka lesu skaitliukui pridedam
             }
@@ -275,7 +338,7 @@ int main() {
         naujas_blokas.antraste.praeitas_hash = blockchain.back().blokoHash; //grandinės susiejimas
         naujas_blokas.antraste.timestamp = std::time(nullptr);
         naujas_blokas.antraste.versija = 1;
-        naujas_blokas.antraste.tx_root = custom_hashas_string(visi_tx_id_kartu); 
+        naujas_blokas.antraste.tx_root = merkleRoot(bloko_transakcijos);
         naujas_blokas.antraste.sudetingumas = 3; 
         naujas_blokas.antraste.nonce = 0; //pradedame speliot nuo 0
 
