@@ -51,3 +51,12 @@ Ankstesnėje versijoje transakcijų hash'ai buvo sudedami vienas su kitu ir taip
 | Sukeista šaknis  | 65c4d693ea01fe916a5970f971a887c20ec818ef86bc1f590c331f7dd4d497a6 |
 
 - Tvarkos pakeitimas kardinaliai pakeičia šaknį, kolizijos čia taip pat neaptinkame.
+
+## Kodėl nėra P2P konsensusas?
+Ši simuliacija nėra pilnavertis P2P konsensusas dėl šių priežasčių:
+#### Nėra decentralizacijos
+Visa simuliacija yra vykdoma lokaliai. Tikrame P2P tinkle tūkstančiai nepriklausomų mazgų (nodes) siunčia transakcijas ir blokus internetu.
+#### Konkurencija tik imituojama
+Realiame P2P blokų konkurencija yra vykdoma lygiagrečiai, o ne paskyrus tam tikrą limitą (laiko ar bandymų) kiekvienam blokui.
+#### Nėra šakų persitvarkymo
+Simuliacijoje grandinė visada auga tiesiai, tačiau tikrame P2P konsensuso tinkle du mazgai gali iškasti reikiamą bloką vienu metu, sukurdami dvi skirtingas šakas, ko pasekoje tinklas atrenka viena šaką pagal "ilgiausios grandinės taisyklę".
