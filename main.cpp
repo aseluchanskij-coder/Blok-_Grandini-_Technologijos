@@ -253,10 +253,11 @@ int main() {
         testMerkleTree(); //paleidziam testus
         return 0; //baigiame programa po testu
     }
-    std::mt19937 gen(12345); //generatorius
+   std::mt19937 gen(12345); //generatorius
     std::uniform_int_distribution<int64_t> balanso_gen(100, 1000000); //riba
     
-    std::map<string, int64_t> balansai; //mape laikom
+    // NAUJA: UTXO duomenų bazė. Raktas = "txId_indeksas", Reikšmė = TXOutput (kupiūra)
+    std::map<string, TXOutput> utxo_poolas; 
     vector<string> vartotoju_id;
     int64_t pradine_bendra_suma = 0;
 
@@ -264,11 +265,21 @@ int main() {
         string id = "user_" + std::to_string(i);
         int64_t pradinis_balansas = balanso_gen(gen);
         
-        balansai[id] = pradinis_balansas;
+        //isreiskiam pradiniais utxo
+        // po kupiura sukuriam
+        string pradinis_txId = "genesis_tx_" + std::to_string(i);
+        
+        TXOutput pradinis_utxo;
+        pradinis_utxo.suma = pradinis_balansas;
+        pradinis_utxo.gavejas = id;
+        
+        // _0 yra pirma genesis bloke isvestis
+        utxo_poolas[pradinis_txId + "_0"] = pradinis_utxo;
+        
         vartotoju_id.push_back(id);
         pradine_bendra_suma += pradinis_balansas;
     }
-    cout << "Sugeneruota vartotoju: " << balansai.size() << endl;
+    cout << "Sugeneruota vartotoju (su pradiniais UTXO): " << utxo_poolas.size() << endl;
     cout << "Bendra pradine suma tinkle: " << pradine_bendra_suma << endl;
 
     vector<Transakcija> transakciju_poolas;  //daba 10k transakciju generuojam
