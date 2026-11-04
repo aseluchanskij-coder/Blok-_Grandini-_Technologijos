@@ -256,7 +256,6 @@ int main() {
    std::mt19937 gen(12345); //generatorius
     std::uniform_int_distribution<int64_t> balanso_gen(100, 1000000); //riba
     
-    // NAUJA: UTXO duomenų bazė. Raktas = "txId_indeksas", Reikšmė = TXOutput (kupiūra)
     std::map<string, TXOutput> utxo_poolas; 
     vector<string> vartotoju_id;
     int64_t pradine_bendra_suma = 0;
@@ -286,33 +285,84 @@ int main() {
     std::uniform_int_distribution<int> vartotojo_indekso_gen(0, 999);
     std::uniform_int_distribution<int64_t> sumos_gen(1, 10000); // Suma nuo 1 iki 10 000
 
-    for (uint64_t i = 0; i < 10000; i++) { //pats generavimas
-        string siuntejas = vartotoju_id[vartotojo_indekso_gen(gen)];
+    for (uint64_t i = 0; i < 10000; i++) { vector<Transakcija> transakciju_poolas;  
+    std::uniform_int_distribution<int> vartotojo_indekso_gen(0, 999);
+    
+    // Sukuriame laikiną UTXO kopiją tik tam, kad generuojant transakcijas
+    // atsitiktinai nebandytume išleisti to paties pinigo du kartus
+    std::map<string, TXOutput> laisvi_utxo = utxo_poolas; 
+
+    for (uint64_t i = 0; i < 10000; i++) {
+        if (laisvi_utxo.empty()) break; // Jei nebeliko pinigų, stabdome
+
+        // atsitiktinai parenkam kupiura
+        std::uniform_int_distribution<int> utxo_gen(0, laisvi_utxo.size() - 1);
+        auto it = std::next(laisvi_utxo.begin(), utxo_gen(gen));
+        
+        string panaudotas_utxo_raktas = it->first;
+        TXOutput sena_isvestis = it->second;
+        string siuntejas = sena_isvestis.gavejas; //savininkas tampa siunteju
+        
+        // imame didesnes "kupiuras"
+        if (sena_isvestis.suma <= 1) continue; 
+        
+        // atsitiktinis gaves (ne tas pats zmogus)
         string gavejas = vartotoju_id[vartotojo_indekso_gen(gen)];
+        while (siuntejas == gavejas) gavejas = vartotoju_id[vartotojo_indekso_gen(gen)];
         
-        while (siuntejas == gavejas) {      //siuntejas negali but tuo pat metu ir gaveju vienoj transakcijoj
-            gavejas = vartotoju_id[vartotojo_indekso_gen(gen)];
-        }
+        // suma ir graza
+        std::uniform_int_distribution<int64_t> sumos_gen_utxo(1, sena_isvestis.suma - 1);
+        int64_t siunciama_suma = sumos_gen_utxo(gen);
+        int64_t graza = sena_isvestis.suma - siunciama_suma; //likutis savininkui
+
         Transakcija tx;
-        tx.siuntejas = siuntejas;
-        tx.gavejas = gavejas;
-        tx.suma = sumos_gen(gen);
-        tx.seka = i; //unikalus nuoseklus numeris
+        tx.seka = i;
         
-        //serializacija
-        string serializuota = serializuotiTransakcija(tx);
-        tx.txId = custom_hashas_string(serializuota);
+        // kuriam ivesti ir nurodom kupiura
+        TXInput ivestis;
+        size_t pos = panaudotas_utxo_raktas.find_last_of('_');
+        ivestis.ankstesnis_txId = panaudotas_utxo_raktas.substr(0, pos);
+        ivestis.isvesties_indeksas = std::stoi(panaudotas_utxo_raktas.substr(pos + 1));
+        ivestis.savininkas = siuntejas;
+        tx.ivestys.push_back(ivestis);
+        
+        // isvestis i kur eis pinigai
+        TXOutput gavejo_isvestis;
+        gavejo_isvestis.suma = siunciama_suma;
+        gavejo_isvestis.gavejas = gavejas;
+        tx.isvestys.push_back(gavejo_isvestis);
+        
+        if (graza > 0) {
+           TXOutput gavejo_isvestis;
+        gavejo_isvestis.suma = siunciama_suma;
+        gavejo_isvestis.gavejas = gavejas;
+        tx.isvestys.push_back(gavejo_isvestis);
+        }
+        
+        // id transakcijos
+        tx.txId = custom_hashas_string(serializuotiTransakcija(tx));
+        
+        // atnaujiname utxo, senus istrinam, naujus pridedam
+        laisvi_utxo.erase(it);
+        laisvi_utxo[tx.txId + "_0"] = gavejo_isvestis;
+        if (graza > 0) {
+            TXOutput grazos_isvestis;
+            grazos_isvestis.suma = graza;
+            grazos_isvestis.gavejas = siuntejas;
+            tx.isvestys.push_back(grazos_isvestis);
+            laisvi_utxo[tx.txId + "_1"] = grazos_isvestis;    
+         }
         
         transakciju_poolas.push_back(tx);
+    }
     }
     
     cout << "Sugeneruota transakciju: " << transakciju_poolas.size() << endl;
     
     //small test
-    cout << "\nPirmos transakcijos pavyzdys:" << endl;
-    cout << "Siuntejas: " << transakciju_poolas[0].siuntejas << endl;
-    cout << "Gavejas: " << transakciju_poolas[0].gavejas << endl;
-    cout << "Suma: " << transakciju_poolas[0].suma << endl;
+  cout << "\nPirmos transakcijos pavyzdys:" << endl;
+    cout << "Ivesciu sk: " << transakciju_poolas[0].ivestys.size() << endl;
+    cout << "Isvesciu sk: " << transakciju_poolas[0].isvestys.size() << endl;
     cout << "Seka: " << transakciju_poolas[0].seka << endl;
     cout << "Tx ID (maisa): " << transakciju_poolas[0].txId << endl;
 
