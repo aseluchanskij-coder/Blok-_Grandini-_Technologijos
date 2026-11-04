@@ -58,10 +58,24 @@ string custom_hashas_string(const string& tekstas) {
 }
 
 string serializuotiTransakcija(const Transakcija& tx) {
-    return tx.siuntejas + "|" + 
-           tx.gavejas + "|" + 
-           std::to_string(tx.suma) + "|" + 
-           std::to_string(tx.seka);
+    string rezultatas = "";
+    //prijungiame ivestis
+    for (const auto& ivestis : tx.ivestys) {
+        rezultatas += ivestis.ankstesnis_txId + "|" + 
+                      std::to_string(ivestis.isvesties_indeksas) + "|" + 
+                      ivestis.savininkas + "|";
+    }
+    
+    //prijungiame išvestis
+    for (const auto& isvestis : tx.isvestys) {
+        rezultatas += std::to_string(isvestis.suma) + "|" + 
+                      isvestis.gavejas + "|";
+    }
+    
+    //prijungiame sekos numeri
+    rezultatas += std::to_string(tx.seka);
+    
+    return rezultatas;
 }
 
 string serializuotiAntraste(const BlokoAnt& ant) {
