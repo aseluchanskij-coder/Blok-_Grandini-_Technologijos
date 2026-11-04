@@ -1,36 +1,3 @@
-# Blockchain v0.1
-
-## Supaprastintos blokų grandinės kūrimas
-
-### Pasiruošimas
-
-Visų pirma reikėjo išsirinkti kurią iš mūsų dviejų maišos funkcijų naudoti. Nusprendėme, kad labiau mums tiktų naudoti Alano sukurtą maišos funkciją (ji buvo kuriama naudojant AI), kadangi šiai funkcijai nereikėtų korekcijų, kadangi 3 eksperimente 'difficulty' antraštės maišos hex užrašas turi prasidėti 3 nuliais.
-
-### Kodo paruošimas
-
-Kad būtų galimybė kurti vartotojus reikėjo pasirinkti kokio tipo objektus kursime. Pasirinkome 'struct' metodą, kadangi jis lengvesnis ir paprastesnis realizacijai, o 'class' metodas yra sudėtingesnis realizuoti. Tačiau ne tai lėmė mūsų pasirinkimą, o tai, kad mums nerūpi koks bus duomenų pasiekiamumo lygis (private/public), nes duomenims nereikės apsaugos nuo savęs pačių nes yra sakykime "paprasti".
-
-Vartotojų būsenos lieka pastovios viso programos veikimo metu, kadangi naudojamas tas pats seed generavimui.
-Tad sukūrus 3 struktūras, teko papildyti kodą 3 papildomomis funkcijomis:
-1. Custom_hashas_string (kadangi mano prieme uint8, tai pridėjau kuri ir string priima).
-2. 
-3. 
-
-### Genesis Blokas
-
-"praeitas_hash" sukūrėme su 64 nuliais. Nustatome pradinį laiką ir kvieciame maišos funkciją su tusčia įvestimi.
-Genesis blokas yra PoW išimtis (pagal užduoties sąlyga), todėl maišą priskiriame be kasimo ciklo.
-
-### Transakcijų atranka ir tikrinimas
-
-### PoW
-
-
-
-
-## Paleidimas terminale
-
-g++ -std=c++11 main.cpp -o blockchain_v01
-./blockchain_v01
-
-# PILDOMA...
+# Merkle tree
+### Palyginimas su v0.1 versija
+Ankstesnėje versijoje transakcijų hash'ai buvo sudedami vienas su kitu ir taip gaunamas bendras hash. Pritaikius Merkle medį dabar transakcijų hash'ai yra sudedami poromis (jei nėra poros su kopija), kol gaunamas vienas root hash.
