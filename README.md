@@ -18,6 +18,8 @@ Ankstesnėje versijoje transakcijų hash'ai buvo sudedami vienas su kitu ir taip
 - Buvęs turinys: 300
 - Naujas turinys: 9999
 
+| Būsena           | Šaknis |
+|------------------|--------|
 | Originali šaknis | c0075d1751c76f517b0441587df6314d9ae1393f6b825f1bce54c464fd11691d |
 | Pakeista šaknis  | 2ba60835a1ccb7c5d02d07fc98467f8e7822cc80f06bb8919580e5e79f9b7af9 |
 
@@ -27,6 +29,8 @@ Ankstesnėje versijoje transakcijų hash'ai buvo sudedami vienas su kitu ir taip
 - Pradinė tvarka : 1 -> 2 -> 3
 - Pakeista tvarka: 2 -> 1 -> 3
 
+| Būsena           | Šaknis |
+|------------------|--------|
 | Originali šaknis | c0075d1751c76f517b0441587df6314d9ae1393f6b825f1bce54c464fd11691d |
 | Sukeista šaknis  | 65c4d693ea01fe916a5970f971a887c20ec818ef86bc1f590c331f7dd4d497a6 |
 
