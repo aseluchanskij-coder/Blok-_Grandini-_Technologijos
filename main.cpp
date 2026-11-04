@@ -189,15 +189,24 @@ string merkleRoot(const vector<Transakcija>& transakcijos) {
     return txHashes[0];
 }
 
+//naudojame nauja logika
 void testMerkleTree() {
     cout << "\n=== UZDUOTIS: MERKLE MEDZIO TESTAVIMAS ===" << endl;
 
     // 1. Sukuriame 5 bazines transakcijas testams
     vector<Transakcija> txs(5);
     for (int i = 0; i < 5; i++) {
-        txs[i].siuntejas = "Alice";
-        txs[i].gavejas = "Bob";
-        txs[i].suma = 100 * (i + 1);
+        TXInput test_in;
+        test_in.ankstesnis_txId = "test_tx_" + std::to_string(i);
+        test_in.isvesties_indeksas = 0;
+        test_in.savininkas = "Alice";
+        
+        TXOutput test_out;
+        test_out.suma = 100 * (i + 1);
+        test_out.gavejas = "Bob";
+        
+        txs[i].ivestys.push_back(test_in);
+        txs[i].isvestys.push_back(test_out);
         txs[i].seka = i;
         txs[i].txId = custom_hashas_string(serializuotiTransakcija(txs[i]));
     }
@@ -217,8 +226,8 @@ void testMerkleTree() {
     cout << "Originali saknis: " << originaliSaknis << endl;
 
     vector<Transakcija> pakeistos = originalios;
-    pakeistos[0].suma = 9999; // Keiciame suma (turini)
-    pakeistos[0].txId = custom_hashas_string(serializuotiTransakcija(pakeistos[0])); // Perskaiciuojame ID!
+    pakeistos[0].isvestys[0].suma = 9999; 
+    pakeistos[0].txId = custom_hashas_string(serializuotiTransakcija(pakeistos[0])); 
     string pakeistaSaknis = merkleRoot(pakeistos);
     cout << "Pakeista saknis:  " << pakeistaSaknis << endl;
     
@@ -226,7 +235,6 @@ void testMerkleTree() {
         cout << "-> Rezultatas: Pakeitus turini, saknis sekmingai pasikeite!" << endl;
     }
 
-    // 4. Sukeistos tvarkos testas (naudosime tas pacias 3 originalias)
     cout << "\n3) Tvarkos keitimo testas (3 transakcijos):" << endl;
     vector<Transakcija> sukeistos = originalios;
     
@@ -248,12 +256,11 @@ int main() {
     cout << "1 - merkle testas, 2 - blockchain sim\n";
     int pasirinkimas;
     cin >> pasirinkimas;
-    
     if (pasirinkimas == 1) {
         testMerkleTree(); //paleidziam testus
         return 0; //baigiame programa po testu
     }
-   std::mt19937 gen(12345); //generatorius
+    std::mt19937 gen(12345); //generatorius
     std::uniform_int_distribution<int64_t> balanso_gen(100, 1000000); //riba
     
     std::map<string, TXOutput> utxo_poolas; 
@@ -283,13 +290,7 @@ int main() {
 
     vector<Transakcija> transakciju_poolas;  //daba 10k transakciju generuojam
     std::uniform_int_distribution<int> vartotojo_indekso_gen(0, 999);
-    std::uniform_int_distribution<int64_t> sumos_gen(1, 10000); // Suma nuo 1 iki 10 000
-
-    for (uint64_t i = 0; i < 10000; i++) { vector<Transakcija> transakciju_poolas;  
-    std::uniform_int_distribution<int> vartotojo_indekso_gen(0, 999);
     
-    // Sukuriame laikiną UTXO kopiją tik tam, kad generuojant transakcijas
-    // atsitiktinai nebandytume išleisti to paties pinigo du kartus
     std::map<string, TXOutput> laisvi_utxo = utxo_poolas; 
 
     for (uint64_t i = 0; i < 10000; i++) {
@@ -333,10 +334,11 @@ int main() {
         tx.isvestys.push_back(gavejo_isvestis);
         
         if (graza > 0) {
-           TXOutput gavejo_isvestis;
-        gavejo_isvestis.suma = siunciama_suma;
-        gavejo_isvestis.gavejas = gavejas;
-        tx.isvestys.push_back(gavejo_isvestis);
+            TXOutput grazos_isvestis;
+            grazos_isvestis.suma = graza;
+            grazos_isvestis.gavejas = siuntejas;
+            tx.isvestys.push_back(grazos_isvestis);
+            laisvi_utxo[tx.txId + "_1"] = grazos_isvestis;    
         }
         
         // id transakcijos
@@ -345,22 +347,14 @@ int main() {
         // atnaujiname utxo, senus istrinam, naujus pridedam
         laisvi_utxo.erase(it);
         laisvi_utxo[tx.txId + "_0"] = gavejo_isvestis;
-        if (graza > 0) {
-            TXOutput grazos_isvestis;
-            grazos_isvestis.suma = graza;
-            grazos_isvestis.gavejas = siuntejas;
-            tx.isvestys.push_back(grazos_isvestis);
-            laisvi_utxo[tx.txId + "_1"] = grazos_isvestis;    
-         }
         
         transakciju_poolas.push_back(tx);
-    }
     }
     
     cout << "Sugeneruota transakciju: " << transakciju_poolas.size() << endl;
     
     //small test
-  cout << "\nPirmos transakcijos pavyzdys:" << endl;
+    cout << "\nPirmos transakcijos pavyzdys:" << endl;
     cout << "Ivesciu sk: " << transakciju_poolas[0].ivestys.size() << endl;
     cout << "Isvesciu sk: " << transakciju_poolas[0].isvestys.size() << endl;
     cout << "Seka: " << transakciju_poolas[0].seka << endl;
@@ -390,11 +384,11 @@ int main() {
     vector<Transakcija> laukiancios_tx = transakciju_poolas;
     while(!laukiancios_tx.empty()) {
         vector<Blokas> kandidatai(5); //sukuriami 5 kandidatai
-        vector<std::map<string, int64_t>> kandidatu_balansai(5);
+        vector<std::map<string, TXOutput>> kandidatu_utxo(5);
         bool sukurta_validziu = false;
 
         for(int k = 0; k < 5; k++){
-            kandidatu_balansai[k] = balansai; 
+            kandidatu_utxo[k] = utxo_poolas; // Kopija patikrai
             
             // transakcijos sumaisomas, kad blokai butu skirtingi
             vector<Transakcija> sumaisytos = laukiancios_tx;
@@ -405,22 +399,54 @@ int main() {
             
             for (const auto& tx : sumaisytos) {
                 if (paimta >= 100) break;
-                
-                // Validacijos
-                if (tx.suma <= 0) continue; 
-                if (tx.siuntejas == tx.gavejas) continue;
                 if (id_dublikatai[tx.txId]) continue;
                 
-                // Balando tikrinimas
-                if (kandidatu_balansai[k][tx.siuntejas] >= tx.suma) {
-                    kandidatu_balansai[k][tx.siuntejas] -= tx.suma;
-                    kandidatu_balansai[k][tx.gavejas] += tx.suma;
+                
+                bool tx_validi = true;
+                int64_t ivesta_suma = 0;
+                int64_t isvesta_suma = 0;
+                
+                for (const auto& iv : tx.ivestys) {
+                    string raktas = iv.ankstesnis_txId + "_" + std::to_string(iv.isvesties_indeksas);
                     
-                    kandidatai[k].transakcijos.push_back(tx);
-                    id_dublikatai[tx.txId] = true;
-                    paimta++;
-                    sukurta_validziu = true;
+
+                    if (kandidatu_utxo[k].find(raktas) == kandidatu_utxo[k].end()) {
+                        tx_validi = false; 
+                        break;
+                    }
+                    // tikriname ar savininkas isleidzia pinigus
+                    if (kandidatu_utxo[k][raktas].gavejas != iv.savininkas) {
+                        tx_validi = false; 
+                        break;
+                    }
+                    ivesta_suma += kandidatu_utxo[k][raktas].suma;
                 }
+                
+                if (!tx_validi) continue;
+                
+                //patikriname isvestis ir sumas
+                for (const auto& isv : tx.isvestys) {
+                    if (isv.suma <= 0) { tx_validi = false; break; }
+                    isvesta_suma += isv.suma;
+                }
+                
+                //sunaudota suma privalo sutapti su sukuriama suma
+                if (!tx_validi || ivesta_suma != isvesta_suma) continue;
+                
+                // 3. Jei viskas gerai - Sunaudojame senus ir sukuriame naujus UTXO laikinoje bazėje
+                for (const auto& iv : tx.ivestys) {
+                    string raktas = iv.ankstesnis_txId + "_" + std::to_string(iv.isvesties_indeksas);
+                    kandidatu_utxo[k].erase(raktas); // Išleidžiame (ištriname)
+                }
+                for (size_t out_idx = 0; out_idx < tx.isvestys.size(); out_idx++) {
+                    string naujas_raktas = tx.txId + "_" + std::to_string(out_idx);
+                    kandidatu_utxo[k][naujas_raktas] = tx.isvestys[out_idx]; // Sukuriame
+                }
+                
+                kandidatai[k].transakcijos.push_back(tx);
+                id_dublikatai[tx.txId] = true;
+                paimta++;
+                sukurta_validziu = true;
             }
             kandidatai[k].antraste.praeitas_hash = blockchain.back().blokoHash;
             kandidatai[k].antraste.timestamp = std::time(nullptr);
@@ -436,7 +462,7 @@ int main() {
             break;
         }
 
-        // Kasimas
+        // Kasimas (lygiagretu kasima istriniau, palikau paprasta kaip prasei - nuoseklu)
         int laimetojas = -1;
         
         while (laimetojas == -1) {
@@ -458,10 +484,12 @@ int main() {
             }
         }
         Blokas nugaletojas = kandidatai[laimetojas];
-        balansai = kandidatu_balansai[laimetojas]; // Priskyrimas tikros būsenos
+        
+        // teisinga busena utxo issaugom
+        utxo_poolas = kandidatu_utxo[laimetojas];
         blockchain.push_back(nugaletojas);
 
-        // Išvalome nugalėtojo transakcijas iš pagrindinio pool'o
+        //nugaletojas is pagrindinio poolo
         std::map<string, bool> ismestos_tx;
         for (const auto& tx : nugaletojas.transakcijos) {
             ismestos_tx[tx.txId] = true;
@@ -485,11 +513,12 @@ int main() {
     auto end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> total_duration = end_time - start_time;
 
-    //skaiciuojam pinigus
+    // is utxo poolo skaiciuojam pinigus
     int64_t galutine_bendra_suma = 0;
-    for (const auto& pora : balansai) {
-        galutine_bendra_suma += pora.second;
+    for (const auto& pora : utxo_poolas) {
+        galutine_bendra_suma += pora.second.suma;
     }
+    
     cout << "Priimtu bloku (su Genesis): " << blockchain.size() << endl;
     cout << "Atmestos transakcijos: " << atmestos_transakcijos << endl;
     cout << "Pradine suma: " << pradine_bendra_suma << endl;
