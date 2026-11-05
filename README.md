@@ -82,4 +82,80 @@ for (int bandymas = 0; bandymas < 1000; bandymas++) {
 | 4        | 4.66835 s | 4.07431 s |
 | 5        | 4.83354 s | 4.10661 s |
 | Vidurkis | 4.73817 s | 4.15029 s |
-- Pritaikius pasiūlytus pakeitimus programa vidutiniškai pagreitėjo beveik 0,6s. Kadangi buvo pakeistas labai mažas kodo fragmentas, toks greičio pokytis yra įspūdingas.  
+- Pritaikius pasiūlytus pakeitimus programa vidutiniškai pagreitėjo beveik 0,6s. Kadangi buvo pakeistas labai mažas kodo fragmentas, toks greičio pokytis yra įspūdingas.
+
+## Atminties naudojimas balansų kopijavime
+Kitas Gemini pasiūlymas buvo std::map pakeisti std::unordered_map, taip paaukojant rikiavimą dėl spartos. Taip pat vietoj pilnos kopijos sukurti naują laikiną map, į kurį įrašomi tik transakcijų dalyviai (taip būtų išvengiama bereikalingo kopijavimo).
+
+Prompt:
+```
+ Šioje vietoje:
+
+vector<std::map<string, int64_t>> kandidatu_balansai(5);// ...for(int k = 0; k < 5; k++){
+
+kandidatu_balansai[k] = balansai;
+
+std::map pakeisk į std::unordered_map bei vietoj visos kopijos daryk "delta"(sukurk naują laikiną map, į kurį įrašyk tik tuos vartotojus, kurių balansai pasikeičia bloke, o tikrininant - jei vartotojo nėra laikinoje kopijoje, balansą imk iš pagrindinio) 
+```
+
+Gavau atsakymą kandidatų ciklo vidų pakeisti į:
+```
+vector<Blokas> kandidatai(5);
+// Dabar tai saugos TIK PASIKEITIMUS (deltas), o ne visą būseną!
+vector<std::unordered_map<string, int64_t>> kandidatu_balansai(5); 
+bool sukurta_validziu = false;
+
+for(int k = 0; k < 5; k++){
+    // IŠTRINAME pilną kopijavimą! Laikinas žemėlapis startuoja tuščias.
+    // kandidatu_balansai[k] = balansai; 
+    
+    vector<Transakcija> sumaisytos = laukiancios_tx;
+    std::shuffle(sumaisytos.begin(), sumaisytos.end(), gen);
+    
+    int paimta = 0;
+    // Čia irgi rekomenduoju unordered_map greitesnei paieškai
+    std::unordered_map<string, bool> id_dublikatai; 
+    
+    for (const auto& tx : sumaisytos) {
+        if (paimta >= 100) break;
+        
+        // Validacijos
+        if (tx.suma <= 0) continue; 
+        if (tx.siuntejas == tx.gavejas) continue;
+        if (id_dublikatai[tx.txId]) continue;
+        
+        // ==========================================
+        // DELTA (SKIRTUMŲ) LOGIKA
+        // ==========================================
+        
+        // 1. SIUNTĖJAS: Jei jo dar nėra laikinoje (delta) būsenoje, balanso ieškome pagrindinėje
+        int64_t siuntejo_esamas_balansas = kandidatu_balansai[k].count(tx.siuntejas) 
+                                           ? kandidatu_balansai[k][tx.siuntejas] 
+                                           : balansai[tx.siuntejas];
+        
+        // 2. Tikriname, ar užtenka pinigų
+        if (siuntejo_esamas_balansas >= tx.suma) {
+            
+            // 3. GAVĖJAS: Tas pats principas
+            int64_t gavejo_esamas_balansas = kandidatu_balansai[k].count(tx.gavejas) 
+                                             ? kandidatu_balansai[k][tx.gavejas] 
+                                             : balansai[tx.gavejas];
+            
+            // 4. Įrašome / atnaujiname reikšmes TIK laikinoje DELTA atmintyje
+            kandidatu_balansai[k][tx.siuntejas] = siuntejo_esamas_balansas - tx.suma;
+            kandidatu_balansai[k][tx.gavejas] = gavejo_esamas_balansas + tx.suma;
+            
+            kandidatai[k].transakcijos.push_back(tx);
+            id_dublikatai[tx.txId] = true;
+            paimta++;
+            sukurta_validziu = true;
+        }
+    }
+    kandidatai[k].antraste.praeitas_hash = blockchain.back().blokoHash;
+    kandidatai[k].antraste.timestamp = std::time(nullptr);
+    kandidatai[k].antraste.versija = 1;
+    kandidatai[k].antraste.tx_root = merkleRoot(kandidatai[k].transakcijos);
+    kandidatai[k].antraste.sudetingumas = 3;
+    kandidatai[k].antraste.nonce = 0;
+}
+```

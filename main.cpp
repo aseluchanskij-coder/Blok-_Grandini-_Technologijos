@@ -5,7 +5,7 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
-#include <map>
+#include <unordered_map>
 #include <chrono>
 #include <ctime>
 #include <random>
@@ -227,7 +227,7 @@ void vykdytiTeisingumoTestus() {
     cout << "======================================================\n\n";
 
     // Sukuriame bazinę būseną testams
-    std::map<string, int64_t> balansai;
+    std::unordered_map<string, int64_t> balansai;
     balansai["Jonas"] = 100;
     balansai["Ona"] = 50;
 
@@ -241,8 +241,8 @@ void vykdytiTeisingumoTestus() {
     Transakcija tx3 = {"Jonas", "Ona", 30, 3, "id_1"}; // 4. Turi buti atmesta (Dubliuotas ID "id_1")
 
     vector<Transakcija> test_pool = {tx1, tx2, tx3};
-    std::map<string, int64_t> laikini_balansai = balansai;
-    std::map<string, bool> matyti_id;
+    std::unordered_map<string, int64_t> laikini_balansai = balansai;
+    std::unordered_map<string, bool> matyti_id;
 
     for (const auto& tx : test_pool) {
         if (matyti_id[tx.txId]) {
@@ -305,7 +305,7 @@ void vykdytiTeisingumoTestus() {
     }
 }
 
-bool papildyti_tx_pool(const Transakcija& tx, vector<Transakcija>& pool, const std::map<string, int64_t>& balansai) {
+bool papildyti_tx_pool(const Transakcija& tx, vector<Transakcija>& pool, const std::unordered_map<string, int64_t>& balansai) {
     if (tx.suma <= 0) return false;
     if (tx.siuntejas == tx.gavejas) return false;
     // Patikrinam, ar siuntejas egzistuoja
@@ -321,7 +321,7 @@ bool papildyti_tx_pool(const Transakcija& tx, vector<Transakcija>& pool, const s
     return true;
 }
 
-bool priimtiBloka(const Blokas& blokas, std::map<string, int64_t>& tikri_balansai, const Blokas& praeitas_blokas) {
+bool priimtiBloka(const Blokas& blokas, std::unordered_map<string, int64_t>& tikri_balansai, const Blokas& praeitas_blokas) {
     // Patikrinam ankstesnio bloko hash
     if (blokas.antraste.praeitas_hash != praeitas_blokas.blokoHash) return false;
 
@@ -333,7 +333,7 @@ bool priimtiBloka(const Blokas& blokas, std::map<string, int64_t>& tikri_balansa
     if (merkleRoot(blokas.transakcijos) != blokas.antraste.tx_root) return false;
 
     // 4. Iš naujo tikriname transakcijas
-    std::map<string, int64_t> laikina_būsena = tikri_balansai;
+    std::unordered_map<string, int64_t> laikina_būsena = tikri_balansai;
     for (const auto& tx : blokas.transakcijos) {
         if (laikina_būsena[tx.siuntejas] < tx.suma) {
             return false;
@@ -347,9 +347,9 @@ bool priimtiBloka(const Blokas& blokas, std::map<string, int64_t>& tikri_balansa
 }
 
 int main() {
-    cout << "1 - merkle testas, 2 - teisingumo testai, 3 - blockchain sim\n";
-    int pasirinkimas;
-    cin >> pasirinkimas;
+    //cout << "1 - merkle testas, 2 - teisingumo testai, 3 - blockchain sim\n";
+    int pasirinkimas = 3;
+    //cin >> pasirinkimas;
     
     if (pasirinkimas == 1) {
         testMerkleTree(); //paleidziam testus
@@ -362,7 +362,7 @@ int main() {
     std::mt19937 gen(12345); //generatorius
     std::uniform_int_distribution<int64_t> balanso_gen(100, 1000000); //riba
     
-    std::map<string, int64_t> balansai; //mape laikom
+    std::unordered_map<string, int64_t> balansai; //mape laikom
     vector<string> vartotoju_id;
     int64_t pradine_bendra_suma = 0;
 
@@ -437,45 +437,63 @@ int main() {
     int atmestos_transakcijos = 0;
     vector<Transakcija> laukiancios_tx = transakciju_poolas;
     while(!laukiancios_tx.empty()) {
-        vector<Blokas> kandidatai(5); //sukuriami 5 kandidatai
-        vector<std::map<string, int64_t>> kandidatu_balansai(5);
-        bool sukurta_validziu = false;
+            vector<Blokas> kandidatai(5);
+// Dabar tai saugos TIK PASIKEITIMUS (deltas), o ne visą būseną!
+vector<std::unordered_map<string, int64_t>> kandidatu_balansai(5); 
+bool sukurta_validziu = false;
 
-        for(int k = 0; k < 5; k++){
-            kandidatu_balansai[k] = balansai; 
+for(int k = 0; k < 5; k++){
+    // IŠTRINAME pilną kopijavimą! Laikinas žemėlapis startuoja tuščias.
+    // kandidatu_balansai[k] = balansai; 
+    
+    vector<Transakcija> sumaisytos = laukiancios_tx;
+    std::shuffle(sumaisytos.begin(), sumaisytos.end(), gen);
+    
+    int paimta = 0;
+    // Čia irgi rekomenduoju unordered_map greitesnei paieškai
+    std::unordered_map<string, bool> id_dublikatai; 
+    
+    for (const auto& tx : sumaisytos) {
+        if (paimta >= 100) break;
+        
+        // Validacijos
+        if (tx.suma <= 0) continue; 
+        if (tx.siuntejas == tx.gavejas) continue;
+        if (id_dublikatai[tx.txId]) continue;
+        
+        // ==========================================
+        // DELTA (SKIRTUMŲ) LOGIKA
+        // ==========================================
+        
+        // 1. SIUNTĖJAS: Jei jo dar nėra laikinoje (delta) būsenoje, balanso ieškome pagrindinėje
+        int64_t siuntejo_esamas_balansas = kandidatu_balansai[k].count(tx.siuntejas) 
+                                           ? kandidatu_balansai[k][tx.siuntejas] 
+                                           : balansai[tx.siuntejas];
+        
+        // 2. Tikriname, ar užtenka pinigų
+        if (siuntejo_esamas_balansas >= tx.suma) {
             
-            // transakcijos sumaisomas, kad blokai butu skirtingi
-            vector<Transakcija> sumaisytos = laukiancios_tx;
-            std::shuffle(sumaisytos.begin(), sumaisytos.end(), gen);
+            // 3. GAVĖJAS: Tas pats principas
+            int64_t gavejo_esamas_balansas = kandidatu_balansai[k].count(tx.gavejas) 
+                                             ? kandidatu_balansai[k][tx.gavejas] 
+                                             : balansai[tx.gavejas];
             
-            int paimta = 0;
-            std::map<string, bool> id_dublikatai; // Apsauga nuo vienodų ID
+            // 4. Įrašome / atnaujiname reikšmes TIK laikinoje DELTA atmintyje
+            kandidatu_balansai[k][tx.siuntejas] = siuntejo_esamas_balansas - tx.suma;
+            kandidatu_balansai[k][tx.gavejas] = gavejo_esamas_balansas + tx.suma;
             
-            for (const auto& tx : sumaisytos) {
-                if (paimta >= 100) break;
-                
-                // Validacijos
-                if (tx.suma <= 0) continue; 
-                if (tx.siuntejas == tx.gavejas) continue;
-                if (id_dublikatai[tx.txId]) continue;
-                
-                // Balando tikrinimas
-                if (kandidatu_balansai[k][tx.siuntejas] >= tx.suma) {
-                    kandidatu_balansai[k][tx.siuntejas] -= tx.suma;
-                    kandidatu_balansai[k][tx.gavejas] += tx.suma;
-                    
-                    kandidatai[k].transakcijos.push_back(tx);
-                    id_dublikatai[tx.txId] = true;
-                    paimta++;
-                    sukurta_validziu = true;
-                }
-            }
-            kandidatai[k].antraste.praeitas_hash = blockchain.back().blokoHash;
-            kandidatai[k].antraste.timestamp = std::time(nullptr);
-            kandidatai[k].antraste.versija = 1;
-            kandidatai[k].antraste.tx_root = merkleRoot(kandidatai[k].transakcijos);
-            kandidatai[k].antraste.sudetingumas = 3;
-            kandidatai[k].antraste.nonce = 0;
+            kandidatai[k].transakcijos.push_back(tx);
+            id_dublikatai[tx.txId] = true;
+            paimta++;
+            sukurta_validziu = true;
+        }
+    }
+    kandidatai[k].antraste.praeitas_hash = blockchain.back().blokoHash;
+    kandidatai[k].antraste.timestamp = std::time(nullptr);
+    kandidatai[k].antraste.versija = 1;
+    kandidatai[k].antraste.tx_root = merkleRoot(kandidatai[k].transakcijos);
+    kandidatai[k].antraste.sudetingumas = 3;
+    kandidatai[k].antraste.nonce = 0;
         }
 
         // Jei nei vienam kandidatui nepavyko rasti validžių transakcijų, baigiam
@@ -540,7 +558,7 @@ for (int bandymas = 0; bandymas < 1000; bandymas++) {
         blockchain.push_back(nugaletojas);
 
         // Išvalome nugalėtojo transakcijas iš pagrindinio pool'o
-        std::map<string, bool> ismestos_tx;
+        std::unordered_map<string, bool> ismestos_tx;
         for (const auto& tx : nugaletojas.transakcijos) {
             ismestos_tx[tx.txId] = true;
         }
