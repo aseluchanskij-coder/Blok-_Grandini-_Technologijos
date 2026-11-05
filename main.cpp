@@ -347,9 +347,9 @@ bool priimtiBloka(const Blokas& blokas, std::unordered_map<string, int64_t>& tik
 }
 
 int main() {
-    //cout << "1 - merkle testas, 2 - teisingumo testai, 3 - blockchain sim\n";
+    cout << "1 - merkle testas, 2 - teisingumo testai, 3 - blockchain sim\n";
     int pasirinkimas = 3;
-    //cin >> pasirinkimas;
+    cin >> pasirinkimas;
     
     if (pasirinkimas == 1) {
         testMerkleTree(); //paleidziam testus

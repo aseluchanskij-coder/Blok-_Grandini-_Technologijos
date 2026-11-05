@@ -159,3 +159,92 @@ for(int k = 0; k < 5; k++){
     kandidatai[k].antraste.nonce = 0;
 }
 ```
+#### Spartos palyginimas
+| Bandymas | v0.2      | v0.3      |
+|----------|-----------|-----------|
+| 1        | 4.81738 s | 3.74287 s |
+| 2        | 4.93145 s | 3.82915 s |
+| 3        | 4.44011 s | 3.73729 s |
+| 4        | 4.66835 s | 3.89167 s |
+| 5        | 4.83354 s | 3.97564 s |
+| Vidurkis | 4.73817 s | 3.83532 s |
+- Dar pridėjus šį pasiūlymą DI patobulinta versija jau greitesnė beveik pilna sekunde. Toks pokytis jau žymiai pastebimas ir pačiam žmogui. Dabar programa yra daug efektyvesnė ir eikvoja mažiau nebūtinų resursų.
+
+## Testai
+### Merkle medis
+Kaip galime matyti žemiau, tiek v0.2 tiek v0.3 testo rezultatai yra identiški. Reiškiasi įgyvendinti patobulinimai išlaikė teisingą programos veikimą, tuo pačiu pagerindami spartą.
+#### v0.2
+1) Šaknys, kai keičiasi transakcijų kiekis
+|Transakcijų skaičius | Šaknis |
+|---------------------|--------|
+| 1                   | c68e80c4b842d42983080271009ed19614dcb8a061375e8de3b2cea55a3362ee |
+| 2                   | 3aa09f4b47a2dba89da28c2b47e23d099230a28cd566bbc5c43f2775e0cacc9c |
+| 3                   | c0075d1751c76f517b0441587df6314d9ae1393f6b825f1bce54c464fd11691d |
+| 5                   | 7e6107983562d9bd4fb227923097b63449215b6110a7a0a7606fcb313d120aa7 |
+
+2) Šaknys, kai keičiamas turinys (3 transakcijos):
+- Buvęs turinys: 300
+- Naujas turinys: 9999
+
+| Būsena           | Šaknis |
+|------------------|--------|
+| Originali šaknis | c0075d1751c76f517b0441587df6314d9ae1393f6b825f1bce54c464fd11691d |
+| Pakeista šaknis  | 2ba60835a1ccb7c5d02d07fc98467f8e7822cc80f06bb8919580e5e79f9b7af9 |
+
+3) Šaknys, kai keičiama transakcijų tvarka (3 transakcijos):
+- Pradinė tvarka : 1 -> 2 -> 3
+- Pakeista tvarka: 2 -> 1 -> 3
+
+| Būsena           | Šaknis |
+|------------------|--------|
+| Originali šaknis | c0075d1751c76f517b0441587df6314d9ae1393f6b825f1bce54c464fd11691d |
+| Sukeista šaknis  | 65c4d693ea01fe916a5970f971a887c20ec818ef86bc1f590c331f7dd4d497a6 |
+
+#### v0.3
+1) Šaknys, kai keičiasi transakcijų kiekis
+|Transakcijų skaičius | Šaknis |
+|---------------------|--------|
+| 1                   | c68e80c4b842d42983080271009ed19614dcb8a061375e8de3b2cea55a3362ee |
+| 2                   | 3aa09f4b47a2dba89da28c2b47e23d099230a28cd566bbc5c43f2775e0cacc9c |
+| 3                   | c0075d1751c76f517b0441587df6314d9ae1393f6b825f1bce54c464fd11691d |
+| 5                   | 7e6107983562d9bd4fb227923097b63449215b6110a7a0a7606fcb313d120aa7 |
+
+2) Šaknys, kai keičiamas turinys (3 transakcijos):
+- Buvęs turinys: 300
+- Naujas turinys: 9999
+
+| Būsena           | Šaknis |
+|------------------|--------|
+| Originali šaknis | c0075d1751c76f517b0441587df6314d9ae1393f6b825f1bce54c464fd11691d |
+| Pakeista šaknis  | 2ba60835a1ccb7c5d02d07fc98467f8e7822cc80f06bb8919580e5e79f9b7af9 |
+
+3) Šaknys, kai keičiama transakcijų tvarka (3 transakcijos):
+- Pradinė tvarka : 1 -> 2 -> 3
+- Pakeista tvarka: 2 -> 1 -> 3
+
+| Būsena           | Šaknis |
+|------------------|--------|
+| Originali šaknis | c0075d1751c76f517b0441587df6314d9ae1393f6b825f1bce54c464fd11691d |
+| Sukeista šaknis  | 65c4d693ea01fe916a5970f971a887c20ec818ef86bc1f590c331f7dd4d497a6 |
+
+### Teisingumo testai
+Detalesnį testo aprašymą galima rasti v0.2 versijoje
+```
+--- Pradine busena: Jonas = 100, Ona = 50 ---
+
+[SCENARIJAI 1, 3, 4] Galiojimas, eiliškumas ir dublikatai
+ -> Patvirtinta (Validus): 70 nuo Jonas (Likutis: 30)
+ -> Atmesta (Truksta lesu): Nori siusti 50, bet turi tik 30
+ -> Atmesta (Dubliuotas ID): id_1
+ * Rezultatas: Jonas galutinis: 30, Ona galutinis: 120
+ * Laukta: Jonas 30, Ona 120. Testas Išlaikytas!
+
+[SCENARIJUS 5] Pakeistas bloko turinys (PoW pažeidimas)
+Buvęs teisingas bloko hash: 000fbe1280b9b10df80a18dac01afc35cc7371d56383ec74fe2ef08cc8890738 (Rastas su nonce: 403)
+ Hash po hakerio transakcijos: 711a610f65754eeca7f62331b8ebac8f10c46edf868d973fdbb3ad94c220f58d
+ -> Rezultatas: Bloko turinys pasikeitė, todėl senas 'nonce' nebetinka. 
+    PoW reikalavimas (000) sugadintas, blokas atmetamas!
+ * Testas Išlaikytas!
+```
+
+- Kaip matome visi testai praeiti sėkmingai!
