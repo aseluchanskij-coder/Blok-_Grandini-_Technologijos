@@ -305,6 +305,47 @@ void vykdytiTeisingumoTestus() {
     }
 }
 
+bool papildyti_tx_pool(const Transakcija& tx, vector<Transakcija>& pool, const std::map<string, int64_t>& balansai) {
+    if (tx.suma <= 0) return false;
+    if (tx.siuntejas == tx.gavejas) return false;
+    // Patikrinam, ar siuntejas egzistuoja
+    if (balansai.find(tx.siuntejas) == balansai.end()) return false; 
+    
+    string tikrasId = custom_hashas_string(serializuotiTransakcija(tx));
+    if (tx.txId != tikrasId) return false; // ID validacija
+    
+    // Patikrinam, ar tokio ID nera poole
+    for (const auto& p_tx : pool) {
+        if (p_tx.txId == tx.txId) return false;
+    }
+    return true;
+}
+
+bool priimtiBloka(const Blokas& blokas, std::map<string, int64_t>& tikri_balansai, const Blokas& praeitas_blokas) {
+    // Patikrinam ankstesnio bloko hash
+    if (blokas.antraste.praeitas_hash != praeitas_blokas.blokoHash) return false;
+
+    // Patikrinam PoW
+    string bloko_hashas = custom_hashas_string(serializuotiAntraste(blokas.antraste));
+    if (bloko_hashas.substr(0, 3) != "000" || bloko_hashas != blokas.blokoHash) return false;
+
+    // Patikrinam Merkle šaknį
+    if (merkleRoot(blokas.transakcijos) != blokas.antraste.tx_root) return false;
+
+    // 4. Iš naujo tikriname transakcijas
+    std::map<string, int64_t> laikina_būsena = tikri_balansai;
+    for (const auto& tx : blokas.transakcijos) {
+        if (laikina_būsena[tx.siuntejas] < tx.suma) {
+            return false;
+        }
+        laikina_būsena[tx.siuntejas] -= tx.suma;
+        laikina_būsena[tx.gavejas] += tx.suma;
+    }
+
+    tikri_balansai = laikina_būsena;
+    return true;
+}
+
 int main() {
     cout << "1 - merkle testas, 2 - teisingumo testai, 3 - blockchain sim\n";
     int pasirinkimas;
@@ -357,7 +398,10 @@ int main() {
         string serializuota = serializuotiTransakcija(tx);
         tx.txId = custom_hashas_string(serializuota);
         
-        transakciju_poolas.push_back(tx);
+        if(papildyti_tx_pool(tx, transakciju_poolas, balansai))
+            transakciju_poolas.push_back(tx);
+        else
+            cout << "Transakcija " << i << " atmesta (negaliojanti)" << endl;
     }
     
     cout << "Sugeneruota transakciju: " << transakciju_poolas.size() << endl;
@@ -461,8 +505,8 @@ int main() {
                 if (laimetojas != -1) break;
             }
         }
-        Blokas nugaletojas = kandidatai[laimetojas];
-        balansai = kandidatu_balansai[laimetojas]; // Priskyrimas tikros būsenos
+        if(priimtiBloka(kandidatai[laimetojas], balansai, blockchain.back())) {
+            Blokas nugaletojas = kandidatai[laimetojas];
         blockchain.push_back(nugaletojas);
 
         // Išvalome nugalėtojo transakcijas iš pagrindinio pool'o
@@ -484,6 +528,11 @@ int main() {
              << " | Tx: " << nugaletojas.transakcijos.size() 
              << " | Nonce: " << nugaletojas.antraste.nonce 
              << " | Hash: " << nugaletojas.blokoHash << endl;
+        } else {
+            cout << "Klaida: Laimėtojo blokas nebuvo priimtas!" << endl;
+            break;
+        }
+        
     }
 
     auto end_time = std::chrono::high_resolution_clock::now();

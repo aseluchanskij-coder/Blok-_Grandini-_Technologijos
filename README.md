@@ -18,6 +18,122 @@ Ankstesnėje versijoje transakcijų hash'ai buvo sudedami vienas su kitu ir taip
     - Kandidatu nugalėtoju tampa tas blokas, iš kurio pirmo randamas tinkamas hash
     - Jei vieno ciklo metu nerandamas laimėtojas, didinamas nonce
 6) Iš transakcijų poolo panaikinamos transakcijos, kurios priklausė blokui laimėtojui
+
+## Transakcijų tikrinimas
+1) Prieš priimant į pool:
+```
+bool papildyti_tx_pool(const Transakcija& tx, vector<Transakcija>& pool, const std::map<string, int64_t>& balansai) {
+    if (tx.suma <= 0) return false;
+    if (tx.siuntejas == tx.gavejas) return false;
+    // Patikrinam, ar siuntejas egzistuoja
+    if (balansai.find(tx.siuntejas) == balansai.end()) return false; 
+    
+    string tikrasId = custom_hashas_string(serializuotiTransakcija(tx));
+    if (tx.txId != tikrasId) return false; // ID validacija
+    
+    // Patikrinam, ar tokio ID nera poole
+    for (const auto& p_tx : pool) {
+        if (p_tx.txId == tx.txId) return false;
+    }
+    return true;
+}
+```
+```
+...
+if(papildyti_tx_pool(tx, transakciju_poolas, balansai))
+    transakciju_poolas.push_back(tx);
+else
+    cout << "Transakcija " << i << " atmesta (negaliojanti)" << endl;
+...
+```
+- Jei praeinami visi patikrinimai, tik tada sugeneruota transakcija yra pridedama.
+
+2) Kandidatams
+```
+for(int k = 0; k < 5; k++){
+            kandidatu_balansai[k] = balansai; 
+            
+            // transakcijos sumaisomas, kad blokai butu skirtingi
+            vector<Transakcija> sumaisytos = laukiancios_tx;
+            std::shuffle(sumaisytos.begin(), sumaisytos.end(), gen);
+            
+            int paimta = 0;
+            std::map<string, bool> id_dublikatai; // Apsauga nuo vienodų ID
+            
+            for (const auto& tx : sumaisytos) {
+                if (paimta >= 100) break;
+                
+                // Validacijos
+                if (tx.suma <= 0) continue; 
+                if (tx.siuntejas == tx.gavejas) continue;
+                if (id_dublikatai[tx.txId]) continue;
+                
+                // Balanso tikrinimas
+                if (kandidatu_balansai[k][tx.siuntejas] >= tx.suma) {
+                    kandidatu_balansai[k][tx.siuntejas] -= tx.suma;
+                    kandidatu_balansai[k][tx.gavejas] += tx.suma;
+                    
+                    kandidatai[k].transakcijos.push_back(tx);
+                    id_dublikatai[tx.txId] = true;
+                    paimta++;
+                    sukurta_validziu = true;
+                }
+            }
+```
+- Veiksmai tikrinami su kandidatu_balansai kopija, taigi tikrieji balansai iki pilno patikrinimo nekeičiami.
+- Ciklas leidžia pasiekti iki 100 transakcijų, jei 100 - break.
+- Transakcija nebus priimta, jei:
+    * Jos suma neigiama
+    * Siuntėjas sutampa su gavėju
+    * Transakcijos id pasikartoja su jau buvusios
+    * Siuntėjas siunčia daugiau balanso nei turi
+
+3) Prieš priimant iškastą bloką:
+```
+bool priimtiBloka(const Blokas& blokas, std::map<string, int64_t>& tikri_balansai, const Blokas& praeitas_blokas) {
+    // Patikrinam ankstesnio bloko hash
+    if (blokas.antraste.praeitas_hash != praeitas_blokas.blokoHash) return false;
+
+    // Patikrinam PoW
+    string bloko_hashas = custom_hashas_string(serializuotiAntraste(blokas.antraste));
+    if (bloko_hashas.substr(0, 3) != "000" || bloko_hashas != blokas.blokoHash) return false;
+
+    // Patikrinam Merkle šaknį
+    if (merkleRoot(blokas.transakcijos) != blokas.antraste.tx_root) return false;
+
+    // 4. Iš naujo tikriname transakcijas
+    std::map<string, int64_t> laikina_būsena = tikri_balansai;
+    for (const auto& tx : blokas.transakcijos) {
+        if (laikina_būsena[tx.siuntejas] < tx.suma) {
+            return false;
+        }
+        laikina_būsena[tx.siuntejas] -= tx.suma;
+        laikina_būsena[tx.gavejas] += tx.suma;
+    }
+
+    tikri_balansai = laikina_būsena;
+    return true;
+}
+```
+```
+if(priimtiBloka(kandidatai[laimetojas], balansai, blockchain.back())) {
+        Blokas nugaletojas = kandidatai[laimetojas];
+        blockchain.push_back(nugaletojas);
+
+        ...
+        Išvalomos transakcijos iš pool, kurios jau buvo priimtame bloke
+        ...
+        } else {
+            cout << "Klaida: Laimėtojo blokas nebuvo priimtas!" << endl;
+            break;
+        }
+```
+Atliekami patikrinimai:
+- Ar sutampa ankstesnio bloko hash?
+- Ar atitinka PoW (hash prasideda "000", ar sutampa hashai?)?
+- Ar iš naujo ieškoma Merkle šaknis sutampa su antraštės šaknimi?
+- Ar kiekviena bloko transakcija yra teisinga?
+* Tik praėjus visus patikrinimus blokas yra priimamas. Kitu atveju konsolėje išvedama klaida.
 ## Testai
 ### Testas 1
 1) Šaknys, kai transakcijų kiekiai skirtingi
