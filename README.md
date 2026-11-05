@@ -73,3 +73,13 @@ for (int bandymas = 0; bandymas < 1000; bandymas++) {
     kandidatai[k].antraste.nonce++;
 }
 ```
+#### Spartos palyginimas
+| Bandymas | v0.2      | v0.3      |
+|----------|-----------|-----------|
+| 1        | 4.81738 s | 4.18734 s |
+| 2        | 4.93145 s | 4.22933 s |
+| 3        | 4.44011 s | 4.15384 s |
+| 4        | 4.66835 s | 4.07431 s |
+| 5        | 4.83354 s | 4.10661 s |
+| Vidurkis | 4.73817 s | 4.15029 s |
+- Pritaikius pasiūlytus pakeitimus programa vidutiniškai pagreitėjo beveik 0,6s. Kadangi buvo pakeistas labai mažas kodo fragmentas, toks greičio pokytis yra įspūdingas.  
